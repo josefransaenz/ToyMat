@@ -1,0 +1,25 @@
+{
+  "name": "ToyMat",
+  "version": "0.3.0",
+  "description": "ToyMat",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified! Configure in package.json\" && exit 1"
+  },
+  "repository": "",
+  "keywords": [
+    "node.js",
+    "eclipse",
+    "nodeclipse"
+  ],
+  "author": "Jose F. Saenz",
+  "license": "MIT",
+  "readmeFilename": "README.md",
+  "dependencies": {
+      "options": "", 
+      "ws": "",
+      "async": "",
+      "dygraphs": ""
+  }
+    
+}

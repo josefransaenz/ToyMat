@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="ISO-8859-1">
+	<style>
+      body {
+        margin: 0px;
+        padding: 0px;
+      }    
+    </style>
+	<title>ToyMat Stream Data</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/bootstrap-3.3.4-dist/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">            
+            <div class="col-xs-6">
+                <button type="button" class="btn btn-default" onclick="window.location.href='support'">Back</button>
+                <button type="button" class="btn btn-primary" id="stream_button">Start</button>
+                Status: <output id="msg" style="display: inline;"></output>
+                Time: <output id="time" style="display: inline;">0</output>
+            </div>
+            <div class="col-xs-6">                
+                <select id="protocol">
+                    <option value="fullMatrix">Full Matrix</option>
+                    <option value="meanOutput">Average output</option>
+                    <option value="meanIndicator">Average indicator</option>
+                    <option value="quadMeanOutput">Quadrant output</option>
+                    <option value="fullMatrixValues">Matrix values</option>
+                </select>
+                <button type="button" class="btn btn-default" id="save_button">Export data to CSV</button>
+                
+            </div> 
+        </div>
+        <br>   
+    <br>    
+    <canvas id="myCanvas" ></canvas>    
+    <br>
+    <br>
+        
+    </div>
+    
+    <!--
+	<a href="support">Back to support page</a>        
+    <select id="protocol">
+    <option value="fullMatrix">Full Matrix</option>
+    <option value="meanOutput">Average output</option>
+    <option value="meanIndicator">Average indicator</option>
+    <option value="quadMeanOutput">Quadrant output</option>
+    <option value="fullMatrixValues">Full Matrix values</option>
+    </select>
+    
+    <button id="stream_button">Start</button> 
+    Acquisition time: <output id="time"></output>. <output id="msg"></output>
+    <br>   
+    <br>    
+    <canvas id="myCanvas" width="410" height="410"></canvas>    
+    <br>
+    <br>
+    <button id="save_button">Export data to CSV</button>
+    
+    <p> 
+	Frames: <output id="frames"></output>
+	CheckSum : <output id="checksum"></output>
+	Bytes received : <output id="bytes"></output>
+    </p>-->
+    
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="/jquery-1.11.2.min.js"></script>
+    <script src="/bootstrap-3.3.4-dist/js/bootstrap.min.js"></script>
+		
+    <script src="/streamdata.js"></script>
+    
+</body>
+</html>

@@ -1,0 +1,141 @@
+<body onload="myFunction()">
+    <div class="container-fluid">
+        <h1>ToyMat support page </h1>    
+        <form action="/streamdata" method="get" class="form-inline" role="form">        
+            <button  type="submit" value="Real-time streaming" class="btn btn-primary">Start real-time streaming</button>
+        </form>
+        <div class="row">             
+            <div class="col-sm-4">
+                <h3>Controller settings</h3>
+                <h4>Serial number: <output id="serial">XXX</output></h4>
+                <form role="form" action="/support" method="post">
+                    <div class="form-group">
+                        <label for="r8">Rows:</label>
+                        <label class="radio-inline"><input type="radio" name="rows" value="8" id="r8">8</label>
+                        <label class="radio-inline"><input type="radio" name="rows" value="16" id="r16">16</label>
+                        <label class="radio-inline"><input type="radio" name="rows" value="32" id="r32">32</label>
+                    </div>
+                    <div class="form-group">
+                        <label for="r8">Columns:</label>
+                        <label class="radio-inline"><input type="radio" name="columns" value="8" id="c8">8</label>
+                        <label class="radio-inline"><input type="radio" name="columns" value="16" id="c16">16</label>
+                        <label class="radio-inline"><input type="radio" name="columns" value="32" id="c32">32</label>
+                    </div>
+                    <label for="gain_list">Input amplifier gain:</label>
+                    <div class="form-group" id="gain_list">                        
+                        <label class="radio-inline"><input type="radio" name="pgaGain" value="0" id="g0">x1</label>
+                        <label class="radio-inline"><input type="radio" name="pgaGain" value="1" id="g1">x2</label>
+                        <label class="radio-inline"><input type="radio" name="pgaGain" value="2" id="g2">x4</label>
+                        <label class="radio-inline"><input type="radio" name="pgaGain" value="3" id="g3">x5</label>
+                        <label class="radio-inline"><input type="radio" name="pgaGain" value="4" id="g4">x8</label>
+                        <label class="radio-inline"><input type="radio" name="pgaGain" value="5" id="g5">x10</label>
+                        <label class="radio-inline"><input type="radio" name="pgaGain" value="6" id="g6">x16</label>
+                        <label class="radio-inline"><input type="radio" name="pgaGain" value="7" id="g7">x32</label>
+                    </div>
+                    <div class="form-group">
+                        <label for="eqTh">Equilibration threshold (kPa): </label>
+                        <input type="text" class="form-control" name="eqThreshold" value="247" id="eqTh">
+                    </div>
+                    <label for="eqTh_list">Pressure calibration constants:</label>
+                    <div class="form-group" id="eqTh_list">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <label for="p1">P1: </label>
+                                <input type="text" class="form-control" name="p1" value="644" id="p1">
+                            </div>
+                            <div class="col-sm-4">
+                                <label for="p2">P2: </label>
+                                <input type="text" class="form-control" name="p2" value="2465" id="p2">
+                            </div>
+                            <div class="col-sm-4">
+                                <label for="q1">Q1: </label>
+                                <input type="text" class="form-control" name="q1" value="80" id="q1">
+                            </div>
+                        </div>                        
+                    </div>
+                    <button type="submit" class="btn btn-danger" 
+                            onclick="alert('Controller configuration is going to change!')">
+                        Set config data</button>    
+                </form>
+            </div>            
+            <div class="col-sm-4">                
+                <h3>Equilibration and Calibration</h3>
+                <form role="form" action="/support" method="post">
+                    <input type="hidden" name="tare" id="tare" value="true">
+                    <button type="submit"  class="btn btn-primary" 
+                            onclick="alert('Please apply the zero weight before continue!')">
+                        Tare</button>
+                </form>
+                <br>
+                <form role="form" action="/calibrate" method="post">
+                    <div class="form-group">
+                        <label for="calibrationWeight">Calibration Weight (kg): </label>
+                        <input type="text" class="form-control" name="calibrationWeight" value="70" id="calibrationWeight">         
+                    </div>
+                    <button type="submit"  class="btn btn-warning" 
+                        onclick="alert('Please apply the reference weight before continue!')">
+                    Calibrate</button>
+                </form>
+                <br>
+                <form role="form" action="/equilibrate" method="post">
+                    <label for="eqArea_list">Equilibration area limits:</label>
+                    <div class="form-group" id="eqArea_list">
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <label for="x0">X0: </label>
+                                <input type="text" class="form-control" name="x0" value="0" id="x0">
+                            </div>
+                            <div class="col-sm-3">
+                                <label for="y0">Y0: </label>
+                                <input type="text" class="form-control" name="y0" value="0" id="y0">
+                            </div>
+                            <div class="col-sm-3">
+                                <label for="xn">Xn: </label>
+                                <input type="text" class="form-control" name="xn" value="8" id="xn">
+                            </div>
+                            <div class="col-sm-3">
+                                <label for="yn">Yn: </label>
+                                <input type="text" class="form-control" name="yn" value="8" id="yn">
+                            </div>
+                        </div>
+                    </div>                    
+                    <button type="submit" class="btn btn-danger" 
+                            onclick="alert('Please apply the equilibration reference pressure before continue!')">
+                        Equilibrate sensors</button>    
+                </form>
+            </div>
+            <div class="col-sm-4">
+                <h3>Patient settings</h3>
+                <form role="form" action="/support" method="post">
+                    <div class="form-group">
+                        <label for="name">Name: </label>
+                        <input type="text" class="form-control" name="name" value="Default_name" id="name">
+                    </div>
+                    <div class="form-group">
+                        <label for="lastname">Last name: </label>
+                        <input type="text" class="form-control" name="lastname" value="Default_lastname" id="lastname">
+                    </div>
+                    <div class="form-group">
+                        <label for="weight">Weight (kg): </label>
+                        <input type="text" class="form-control" name="weight" value="00" id="weight">
+                    </div>
+                    <div class="form-group">
+                        <label for="age">Age: </label>
+                        <input type="text" class="form-control" name="age" value="00" id="age">
+                    </div>
+                    <button type="submit" class="btn btn-success" 
+                            onclick="alert('Patient data is about to change!')">
+                        Set patient data</button>    
+                </form>
+            </div>
+        </div>
+    </div> 
+    
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="/jquery-1.11.2.min.js"></script>
+    <script src="/bootstrap-3.3.4-dist/js/bootstrap.min.js"></script>
+
+</body>
+</html>

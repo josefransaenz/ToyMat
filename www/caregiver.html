@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>    
+    <title>ToyMat Caregiver</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/bootstrap-3.3.4-dist/css/bootstrap.min.css">    
+    </head>
+<body>
+    <div class="container-fluid">  
+        <h2>ToyMat caregiver page </h2>
+        <div class="row">
+            <div class="col-sm-6" id="main_col">
+                
+                Stato della communicazione: <output id="msg" style="display: inline;"></output>
+                <br>
+                <br>
+                <label for="patient">Paziente: </label> <output id="patient_name" style="display: inline;"> Default name</output>
+                <label for="age"> Età: </label> <output id="patient_age" style="display: inline;"> 00 years</output>
+                <label for="weight"> Peso: </label> <output id="patient_weight" style="display: inline;"> 00 kg</output>
+                <h4>Attività registrate:</h4>
+                <select id="taskSelect">
+                    <option value=null>Selezionare una attività...</option>
+                    <option value="standStill">Equillibrio con feedback visivo</option>
+                    <option value="standUp">Movimento da seduto a in piede</option>
+                    <option value="standStillBlind">Equillibrio senza feedback visivo</option>
+                </select>
+                <select id="taskFiles_select">
+                    <option value=null>Selezzionare i registri</option>
+                    <option value=-1>Tutti i registri</option>
+                </select>
+            </div>
+            <div class="col-sm-6" id="datails_col">
+                <div id="taskDetails">
+                    <label for="task_list" id="list_label"> Riassunto misure:</label>
+                    <ul class="list-group" id="task_list">
+                      <li class="list-group-item"><span class="badge" id="value1">0</span>
+                          <output id="measure1" style="display: inline;"> m1 </output></li>
+                      <li class="list-group-item"><span class="badge" id="value2">0</span>
+                          <output id="measure2" style="display: inline;"> m2 </output></li>
+                      <li class="list-group-item"><span class="badge" id="value3">0</span>
+                          <output id="measure3" style="display: inline;"> m3 </output></li>
+                    </ul> 
+                </div>
+            </div>
+        </div>        
+        <div id="graph_div">
+            <label for="canvas_type"> Tipo di visualizzazione:</label>
+            <select id="canvas_type">
+                <option value="plot">Grafico delle misure nel tempo</option>
+                <option value="matrix">Immagine di pressione</option>
+            </select> 
+            <br>
+            <br>             
+            <div class="row" id="plot_div">
+                <div class="col-sm-6" id="graph1_div">
+                </div>
+                <div class="col-sm-6" id="graph2_div">
+                </div>
+            </div>
+            <canvas id="myCanvas" ></canvas>
+            <input type="range" id="frames_range" value="0">
+        </div>           
+    </div>
+     
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="/jquery-1.11.2.min.js"></script>
+    <script src="/bootstrap-3.3.4-dist/js/bootstrap.min.js"></script>
+        
+    <script src="/caregiver.js"></script>
+    <script src="/dygraph-combined-dev.js"></script>
+</body>
+</html>
