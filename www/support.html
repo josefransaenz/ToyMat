@@ -103,6 +103,20 @@
                             onclick="alert('Please apply the equilibration reference pressure before continue!')">
                         Equilibrate sensors</button>    
                 </form>
+                <br>
+                <form role="form" action="/support" method="post">
+                    <input type="hidden" name="getEquilibration" id="getEquilibration" value="true">
+                    <button type="submit"  class="btn btn-danger" 
+                            onclick="alert('This operation will change the controller configuration file!')">
+                        Save equilibration data to file</button>
+                </form>
+                <br>
+                <form role="form" action="/support" method="post">
+                    <input type="hidden" name="setEquilibration" id="setEquilibration" value="true">
+                    <button type="submit"  class="btn btn-danger" 
+                            onclick="alert('This operation will change the equilibration settings in the controller  according to the configuration file!')">
+                        Set controller equilibration from file</button>
+                </form>
             </div>
             <div class="col-sm-4">
                 <h3>Patient settings</h3>

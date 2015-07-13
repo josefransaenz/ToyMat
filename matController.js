@@ -25,9 +25,11 @@ var matController = function (configData){
 		calibrationWeight: 1,
 		calibrationOutput: 1,
 		calibrationOffset: 0,
-		maxZeroFrame: new Array(1024)
+		maxZeroFrame: new Array(1024),
+		equilibrationFrame: new Array(1024)
 	};	
 	defaultConfigData.maxZeroFrame = dataProcessing.initArray(defaultConfigData.maxZeroFrame);
+	defaultConfigData.equilibrationFrame = dataProcessing.initArray(defaultConfigData.equilibrationFrame, 255);
 	// Create an option object with default value 
     this.configData = new Options(defaultConfigData);
     
@@ -66,9 +68,11 @@ var matController = function (configData){
 			stop : "!",
 			start : "$~1",
 			equilibrate : "$~2",
+			getEquilibration : "$~3",
 			acknowledge : "%",
 			badFrame : "$~4",
-			getState : "$~5"
+			getState : "$~5",
+			setEquilibration : "$~6",
 	};
 	this._configstr = {
 			rows : "$#r",
@@ -139,6 +143,13 @@ var matController = function (configData){
 			this.push(self.decodeFrame(chunk));
 			self.frame.count++;
 			console.error('f_ok: ' + self.frame.count);
+		} else if (clen === 1025) {
+			var frame = [];
+			for (var n = 0; n < 1024; n++){
+				frame.push(chunk[n]-40);
+			}
+			this.push(frame);
+			console.error('equilibration frame received');
 		} else if (clen >= 2 && clen <= 4 && chunk[0] <= 40){
 			self.emit('state', chunk[0]);
 		} else if (clen > 10) {
@@ -209,7 +220,8 @@ var matController = function (configData){
 			for (i = 0; i < dim; i++){
 				dato = chunk[i] - 40;	
 				self.frame.array[i] = self.calibratedOutput(dato);//*4
-				if (self.frame.array[i] > self.configData.value.maxZeroFrame[i]){
+				chunk2[i] = dato;
+				/*if (self.frame.array[i] > 30){//self.configData.value.maxZeroFrame[i]){
 					if (self.frame.array[i] < 255){
 						chunk2[i] = self.frame.array[i];
 					} else {
@@ -220,7 +232,7 @@ var matController = function (configData){
 				} else {
 					chunk2[i] = 0;
 				}
-				
+				*/
 	        }
 			//console.error('load: ' + self.frame.load.toString() + ' + ' + self.frame.activePixels.toString())			
 		} else if (self.bytes === 2){
@@ -281,6 +293,19 @@ var matController = function (configData){
 		self._write(self._configstr.eqYn + yn);
 		self._write(self._commandstr.equilibrate);
 	};
+	
+	this.getEquilibration = function (configFileName) {
+		self._write(self._commandstr.getEquilibration);
+		self.dataStream.once('data', function(frame) {
+			console.error('writing config data: ' + frame);
+			self.writeConfigData({"equilibrationFrame": frame}, configFileName);
+		});
+	}
+	
+	this.setEquilibration = function (configFileName) {	
+		console.error('sending config data ');
+		self._write(self._commandstr.setEquilibration);		
+	}
 
 };
 

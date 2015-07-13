@@ -18,6 +18,10 @@ function support(response, request) {
 				dataHandlers.setPatient(data);
 			} else if (data.tare !== undefined){
 				dataHandlers.tare();
+			} else if (data.getEquilibration !== undefined){
+				dataHandlers.getEquilibration();
+			} else if (data.setEquilibration !== undefined){
+				dataHandlers.setEquilibration();
 			} 
 		 });
 	 }

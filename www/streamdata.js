@@ -329,7 +329,19 @@ var QuadCanvas = function(){
     context.lineWidth = widths;
     context.strokeStyle = 'black';
     context.stroke();
-	
+	var bufferX = [];
+    var bufferY = [];
+    for (var n = 0; n < 5; n++) {
+        bufferX.push(canvas.height / 2);
+        bufferY.push(canvas.height / 2);
+    }
+    function bufferMean (buffer){
+        var sum = 0;
+        for (var n = 0; n < buffer.length; n++){
+            sum += buffer[n];
+        }
+	   return sum/buffer.length;
+    }
 	this.draw = function () {
 		  var i = 0;
 		  var X = (this.data[0] + this.data[2]) - (this.data[1] + this.data[3]);
@@ -346,7 +358,12 @@ var QuadCanvas = function(){
 		  } else if (Y > (canvas.height / 2) - widths*3){
 			  Y = (canvas.height / 2) - widths*3;
 		  }
-        
+        bufferX.unshift(X);
+        bufferX.pop();
+        X = bufferMean(bufferX);
+        bufferY.unshift(Y);
+        bufferY.pop();
+        Y = bufferMean(bufferY);
 		  context.clearRect(widths, widths, canvas.width-widths*2, canvas.height-widths*2);
 		  context.lineWidth = Math.round(widths/2);
 		  context.strokeStyle = 'gray';

@@ -52,6 +52,7 @@ function equilibrate(area2equilibrate, cb){
 	}
 }
 
+
 function tare(cb){
 	if (!patientOnline && clientStreams.length() === 0){
 		patientOnline = true;
@@ -115,6 +116,20 @@ function calibrate(data, cb){
 	}
 }
 exports.calibrate = calibrate;
+
+function getEquilibration(){
+	if (!patientOnline && clientStreams.length() === 0){
+		toymat.getEquilibration(pathName + configFile);
+	}
+}
+exports.getEquilibration = getEquilibration;
+
+function setEquilibration(){
+	if (!patientOnline && clientStreams.length() === 0){
+		toymat.setEquilibration(pathName + configFile);
+	}
+}
+exports.setEquilibration = setEquilibration;
 
 var actions = {
 		"checkProtocol" : 0,
