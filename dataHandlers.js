@@ -61,7 +61,7 @@ function tare(cb){
 		var cont = 0;
 		var n;
 		var maxArray = new Array(toymat.dimension);
-		maxArray = dataProcessing.initArray(maxArray);
+		maxArray = dataProcessing.initArray(maxArray, 10);
 		console.error('Tare request');
 		toymat.start();
 		toymat.dataStream.on('data', function(chunk) {			
@@ -76,9 +76,14 @@ function tare(cb){
 	        	toymat.dataStream.removeAllListeners('data');
 	        	toymat.stop();
 	        	sum /= bufferLength;
+	        	var maxx=0;
 	        	for (n = 0; n < maxArray.length; n++){
 	        		maxArray[n] = Math.ceil(maxArray[n] * 1.2);
+	        		if (maxx < maxArray[n]){
+	        			maxx = maxArray[n];
+	        		}
 	        	}
+	        	console.error('max tare value: ' + maxx.toString());
 	        	toymat.writeConfigData({"calibrationOffset": sum, "maxZeroFrame": maxArray}, pathName + configFile);
 	        	patientOnline = false;
 				if (typeof cb === 'function'){
@@ -275,7 +280,7 @@ transforms["quadMeanOutput"] = function(chunk){
 	}
 	output4.activePixels = toymat.frame.activePixels;
 	output4.dt = toymat.frame.dt;
-	console.error(JSON.stringify(output4));
+	//console.error(JSON.stringify(output4));
 	return output4;
 };
 

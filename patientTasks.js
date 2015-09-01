@@ -292,7 +292,7 @@ var checkPatient = function(messageSender, taskName){
 		if (this.state !== this.RUNNING) {return;}
 		var meanLoad = dataProcessing.mean(this.totalLoadBuffer);
 		var stdLoad = dataProcessing.std(this.totalLoadBuffer);
-		if (meanLoad > this.minLoad && meanLoad < this.maxLoad && stdLoad < maxStd){
+		if (meanLoad > this.minLoad){// && meanLoad < this.maxLoad && stdLoad < maxStd){
 			this.emit('complete', this.completeMessage);
 			this.stop();
 			console.error('checkPatient task end ok');

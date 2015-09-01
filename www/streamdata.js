@@ -193,6 +193,7 @@ function readData(data){
 		//rowData = data.dt.toString() + ",";
         var maxi = data[0];
         var mini = data[0];
+        var avg = 0;
 		rowData = data[dataSpecs.dimension].toString() + ",";//dt
 		for (var i = 0; i < dataSpecs.dimension; i++){                  
 			myCanvas.data[i] = data[i];            
@@ -200,7 +201,13 @@ function readData(data){
             if (maxi<data[i]){ maxi = data[i];}
             if (mini>data[i]){ mini = data[i];}
         }
-        document.getElementById('msg').innerHTML = 'max: ' + maxi.toString() + ', mini: ' + mini.toString();
+        /*for (var m = 12; m<18;m++){
+            for (var n = 12;n<18;n++){
+                avg += data[m*32 + n];
+            }
+        }*/
+        avg /= 36;
+        document.getElementById('msg').innerHTML = 'max: ' + maxi.toString() + ', avg: ' + avg.toString();
         //document.getElementById('msg').innerHTML = 'pixels: ' + data.activePixels.toString();
 	} else if (dataSpecs.dimension<=4 && data.length === dataSpecs.dimension){			
 		rowData = data.dt.toString() + ",";

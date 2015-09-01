@@ -125,7 +125,8 @@ ws.onmessage = function (event) {
             changeCanvas();
 			displaySummary(results.summary, results.labels);
 			plotMeasures(results.measures, results.labels);
-			displayFrames(results.frames);			
+			displayFrames(results.frames);
+            document.getElementById('msg').innerHTML = "Ok";
 		} else{
             globalResults.measures.mean[0][fileCounter] = results.summary.mean[0];
             globalResults.measures.mean[1][fileCounter] = results.summary.mean[1];
@@ -155,13 +156,13 @@ ws.onmessage = function (event) {
                 displaySummary(globalResults.summary, globalResults.labels);
                 plotMeasures(globalResults.measures, globalResults.labels);
                 readingAllFiles = false;
+                document.getElementById('msg').innerHTML = "Ok";
             } else{
                 var message = {"action" : {'task': task, 'file': taskFiles[fileCounter]}};
                 ws.send(JSON.stringify(message));
-                document.getElementById('msg').innerHTML = 'scaricando i dati del registro ' + (fileCounter + 1).toString + '/' + taskFiles.length.toString() + ' ...';
+                document.getElementById('msg').innerHTML = 'scaricando i dati del registro ' + (fileCounter + 1).toString() + '/' + taskFiles.length.toString() + ' ...';
             }
-        }
-		document.getElementById('msg').innerHTML = "Ok";
+        }		
 	}		
 }	
 	
@@ -320,9 +321,25 @@ function plotMeasures(measures, labels){
     }
     var g1;
     if (readingAllFiles){
-       g1 = new Dygraph(graph1_div, graphData, {labels: ["tempo", labels.label[0], labels.label[1]], xlabel: "Tempo/Data", ylabel: "(%)", title: "Bilancio", xRangePad: window.innerWidth*0.01, errorBars: true}); 
+       g1 = new Dygraph(graph1_div, graphData, {
+           labels: ["tempo", labels.label[0], labels.label[1]],
+           xlabel: "Tempo/Data",
+           ylabel: "(%)",
+           title: "Bilancio",
+           xRangePad: window.innerWidth*0.01,
+           errorBars: true,
+           drawPoints: true,
+           colors: ["rgb(255,0,0)", "rgb(0,0,255)"]
+       }); 
     } else{
-	   g1 = new Dygraph(graph1_div, graphData, {labels: ["tempo", labels.label[0], labels.label[1]], xlabel: "Tempo (s)", ylabel: "(%)", title: "Bilancio", xRangePad: window.innerWidth*0.01 });
+	   g1 = new Dygraph(graph1_div, graphData, {
+           labels: ["tempo", labels.label[0], labels.label[1]],
+           xlabel: "Tempo (s)",
+           ylabel: "(%)",
+           title: "Bilancio",
+           xRangePad: window.innerWidth*0.01,
+           colors: ["rgb(255,0,0)", "rgb(0,0,255)"]
+       });
     }
     graphData = [];
     for (x in measures.time){
@@ -335,13 +352,26 @@ function plotMeasures(measures, labels){
     var g2;
     if (readingAllFiles){
         if (task.search('standUp') >= 0){
-            g2 = new Dygraph(graph2_div, graphData, {labels: [ "tempo", labels.label[2] ], xlabel: "Tempo/Data", ylabel: "(s)", title: "Durata sit-to-stand", xRangePad: window.innerWidth*0.01, errorBars: true}); 
+            g2 = new Dygraph(graph2_div, graphData, {
+                labels: [ "tempo", labels.label[2] ],
+                xlabel: "Tempo/Data", ylabel: "(s)",
+                title: "Durata sit-to-stand",
+                xRangePad: window.innerWidth*0.01,
+                drawPoints: true,
+                errorBars: true
+            }); 
         } else{
             g2 = new Dygraph(graph2_div, graphData, {labels: [ "tempo", labels.label[2] ], xlabel: "Tempo/Data", ylabel: "(kg)", title: "Carico", xRangePad: window.innerWidth*0.01, errorBars: true}); 
         }
     } else {
         if (task.search('standUp') >= 0){
-            g2 = new Dygraph(graph2_div, graphData, {labels: [ "tempo", labels.label[2] ], xlabel: "Tempo (s)", ylabel: "(kg)", title: "Carico", xRangePad: window.innerWidth*0.01});
+            g2 = new Dygraph(graph2_div, graphData, {
+                labels: [ "tempo", labels.label[2] ],
+                xlabel: "Tempo (s)",
+                ylabel: "(kg)",
+                title: "Carico",
+                xRangePad: window.innerWidth*0.01
+            });
             if (measures.start !== undefined){
                 g2.ready(function() {
                     g2.setAnnotations([{

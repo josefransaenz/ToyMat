@@ -155,9 +155,12 @@ var matController = function (configData){
 		} else if (clen > 10) {
 			self._write(self._commandstr.badFrame);
 			console.error("Bad frame: " + clen.toString() + ' bytes. last: "' + chunk[chunk.length-self.endBytes] + '"' + "Frame size: "+self.frameSize);
-			self.frame.count++;
+			self.frame.count++;			
+			console.error('Bad buffer content: ');
+			for (var k = 0; k <clen; k++) {
+				console.error('k: ' + k.toString() + ' - ' +  chunk[k].toString() + ', ');
+			} 
 			console.error('f_no: ' + self.frame.count);
-			//console.error(chunk);
 		}		
 		done();
 	};
@@ -220,19 +223,18 @@ var matController = function (configData){
 			for (i = 0; i < dim; i++){
 				dato = chunk[i] - 40;	
 				self.frame.array[i] = self.calibratedOutput(dato);//*4
-				chunk2[i] = dato;
-				/*if (self.frame.array[i] > 30){//self.configData.value.maxZeroFrame[i]){
-					if (self.frame.array[i] < 255){
-						chunk2[i] = self.frame.array[i];
+				dato = self.frame.array[i] - self.configData.value.maxZeroFrame[i];
+				if (dato > 0){
+					if (dato < 255){
+						chunk2[i] = dato;
 					} else {
 						chunk2[i] = 255;
 					}					
-					self.frame.mean += self.frame.array[i];
+					self.frame.mean += dato;
 					self.frame.activePixels++;
 				} else {
 					chunk2[i] = 0;
-				}
-				*/
+				}				
 	        }
 			//console.error('load: ' + self.frame.load.toString() + ' + ' + self.frame.activePixels.toString())			
 		} else if (self.bytes === 2){
@@ -243,8 +245,9 @@ var matController = function (configData){
 				//self.frame.array[n] *= 4;
 				self.frame.array[n] += chunk[i+1]-40;
 				self.frame.array[n] = self.calibratedOutput(self.frame.array[n]);
-				self.frame.mean += self.frame.array[n];
+				//self.frame.mean += self.frame.array[n];
 				if (self.frame.array[i] > self.configData.value.maxZeroFrame[i]){
+					
 					if (self.frame.array[i] < 255){
 						chunk2[n] = self.frame.array[n];
 					} else {
