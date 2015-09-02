@@ -12,16 +12,16 @@ var util = require('util')
 var matController = function (configData){
 	var defaultConfigData = {
 		serialNumber: 'TYMT001',
-		rows : '32', //two chars from 01 to 32
-		columns : '32', //two chars from 01 to 32
-		eqThreshold : '247', // desired digital output
+		rows : 32, //two chars from 01 to 32
+		columns : 32, //two chars from 01 to 32
+		eqThreshold : 247, // desired digital output
 							 // better if it's equal to pressure in kPa, 
 							 // must have three chars from 000 to 999		
-		pgaGain : '1', //gain parameter for PGA, single char '1' means gain x2 (see PGA datasheet)
-		endBytes : '2', //number of bytes at the end of each frame, 2 = dt + newLine char
-		p1: '644',
-		p2: '2465',
-		q1: '80',
+		pgaGain : 1, //gain parameter for PGA, single char '1' means gain x2 (see PGA datasheet)
+		endBytes : 2, //number of bytes at the end of each frame, 2 = dt + newLine char
+		p1: 644,
+		p2: 2465,
+		q1: 80,
 		calibrationWeight: 1,
 		calibrationOutput: 1,
 		calibrationOffset: 0,
@@ -93,8 +93,8 @@ var matController = function (configData){
 	
 	var self = this;
 	this._setConfigData = function(){
-		self._write(self._configstr.rows + self.configData.value.rows);
-		self._write(self._configstr.columns + self.configData.value.columns);
+		//self._write(self._configstr.rows + self.configData.value.rows);
+		//self._write(self._configstr.columns + self.configData.value.columns);
 		self._write(self._configstr.eqThreshold + self.configData.value.eqThreshold);
 		//self._write(self._configstr.bytes + self.configData.value.bytes);
 		self._write(self._configstr.pgaGain + self.configData.value.pgaGain);
@@ -223,7 +223,7 @@ var matController = function (configData){
 		if (self.bytes === 1){	
 			for (i = 0; i < dim; i++){
 				dato = chunk[i] - 40;
-				if (dato == 0) {
+				if (dato === 0) {
 					chunk2[i] = 255;
 					continue;
 				}
@@ -291,7 +291,7 @@ var matController = function (configData){
 	
 	this.equilibrateSensors = function (x0, y0, xn, yn){		
 		//ask arduino to start an equilibration
-		if (xn>self.columns || yn>self.columns){
+		if (xn > self.columns || yn > self.columns){
 			console.error('invalid equilibration area');
 			return false;
 		}
@@ -317,7 +317,7 @@ var matController = function (configData){
 	};
 	
 	this.setArea = function (x0, y0, xn, yn) {
-		if (xn>self.columns || yn>self.columns){
+		if (xn > 32 || yn > 32 || xn < x0 || yn < y0){
 			console.error('invalid area');
 			return false;
 		}
@@ -326,7 +326,8 @@ var matController = function (configData){
 		self._write(self._configstr.eqXn + xn);
 		self._write(self._configstr.eqY0 + y0);
 		self._write(self._configstr.eqYn + yn);
-		self._write(self._commandstr.setArea);
+		self._write(self._commandstr.setArea);		
+		
 	};
 
 };

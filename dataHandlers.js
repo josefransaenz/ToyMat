@@ -137,7 +137,11 @@ function setEquilibration(){
 exports.setEquilibration = setEquilibration;
 
 function setArea(rect){
-	toymat.setArea(rect.x0, rect.y0, rect.xn, rect.yn);
+	toymat.setArea(32 - rect.x0, rect.y0, 32 - rect.xn, rect.yn);
+	configController({
+		rows: Math.abs(rect.xn - rect.x0),
+		columns: rect.yn - rect.y0
+		});
 }
 exports.setArea = setArea;
 

@@ -28,8 +28,8 @@ function support(response, request) {
 	 }
 	dataHandlers.getPatient(function(patientData){
 		dataHandlers.getConfigData(function(configData){
-			var rowsId = 'r' + configData.rows.toString();
-			var columnsId = 'c' + configData.columns.toString();
+			var rowsId = 'r32';// + configData.rows.toString();
+			var columnsId = 'c32';// + configData.columns.toString();
 			var eqThId = 'eqTh';
 			var gainId = 'g' + configData.pgaGain.toString();
 			var p1Id = 'p1';
