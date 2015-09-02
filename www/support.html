@@ -122,20 +122,49 @@
                 <h3>Patient settings</h3>
                 <form role="form" action="/support" method="post">
                     <div class="form-group">
-                        <label for="name">Name: </label>
-                        <input type="text" class="form-control" name="name" value="Default_name" id="name">
-                    </div>
-                    <div class="form-group">
-                        <label for="lastname">Last name: </label>
-                        <input type="text" class="form-control" name="lastname" value="Default_lastname" id="lastname">
-                    </div>
-                    <div class="form-group">
-                        <label for="weight">Weight (kg): </label>
-                        <input type="text" class="form-control" name="weight" value="00" id="weight">
-                    </div>
-                    <div class="form-group">
-                        <label for="age">Age: </label>
-                        <input type="text" class="form-control" name="age" value="00" id="age">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <label for="name">Name: </label>
+                                <input type="text" class="form-control" name="name" value="Default_name" id="name">
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="lastname">Last name: </label>
+                                <input type="text" class="form-control" name="lastname" value="Default_lastname" id="lastname">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <label for="weight">Weight (kg): </label>
+                                <input type="text" class="form-control" name="weight" value="00" id="weight">
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="age">Age: </label>
+                                <input type="text" class="form-control" name="age" value="00" id="age">
+                            </div>
+                        </div>
+                        <br>
+                        <label for="acArea_list">Acquisition area limits:</label>
+                        <div class="form-group" id="acArea_list">
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <label for="x0">X0: </label>
+                                    <input type="text" class="form-control" name="x0" value="0" id="x0">
+                                </div>
+                                <div class="col-sm-3">
+                                    <label for="y0">Y0: </label>
+                                    <input type="text" class="form-control" name="y0" value="0" id="y0">
+                                </div>
+                                <div class="col-sm-3">
+                                    <label for="xn">Xn: </label>
+                                    <input type="text" class="form-control" name="xn" value="32" id="xn">
+                                </div>
+                                <div class="col-sm-3">
+                                    <label for="yn">Yn: </label>
+                                    <input type="text" class="form-control" name="yn" value="32" id="yn">
+                                </div>
+                            </div>
+                        </div> 
+                        
                     </div>
                     <button type="submit" class="btn btn-success" 
                             onclick="alert('Patient data is about to change!')">

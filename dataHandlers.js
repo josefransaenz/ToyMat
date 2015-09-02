@@ -136,6 +136,11 @@ function setEquilibration(){
 }
 exports.setEquilibration = setEquilibration;
 
+function setArea(rect){
+	toymat.setArea(rect.x0, rect.y0, rect.xn, rect.yn);
+}
+exports.setArea = setArea;
+
 var actions = {
 		"checkProtocol" : 0,
 		"start" : 1,
@@ -162,6 +167,7 @@ var patientStream = {};
 var taskReady = true;
 var cont = 0;
 var task = {};
+
 function fitTest0(action, ws){
 	function messageSender(message){
 		ws.send(JSON.stringify(message), function() { });

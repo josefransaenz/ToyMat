@@ -73,6 +73,7 @@ var matController = function (configData){
 			badFrame : "$~4",
 			getState : "$~5",
 			setEquilibration : "$~6",
+			setArea : "$~7",
 	};
 	this._configstr = {
 			rows : "$#r",
@@ -221,8 +222,13 @@ var matController = function (configData){
 		var dato;
 		if (self.bytes === 1){	
 			for (i = 0; i < dim; i++){
-				dato = chunk[i] - 40;	
+				dato = chunk[i] - 40;
+				if (dato == 0) {
+					chunk2[i] = 255;
+					continue;
+				}
 				self.frame.array[i] = self.calibratedOutput(dato);//*4
+				chunk2[i] = dato;
 				dato = self.frame.array[i] - self.configData.value.maxZeroFrame[i];
 				if (dato > 0){
 					if (dato < 255){
@@ -234,7 +240,7 @@ var matController = function (configData){
 					self.frame.activePixels++;
 				} else {
 					chunk2[i] = 0;
-				}				
+				}			
 	        }
 			//console.error('load: ' + self.frame.load.toString() + ' + ' + self.frame.activePixels.toString())			
 		} else if (self.bytes === 2){
@@ -303,12 +309,25 @@ var matController = function (configData){
 			console.error('writing config data: ' + frame);
 			self.writeConfigData({"equilibrationFrame": frame}, configFileName);
 		});
-	}
+	};
 	
 	this.setEquilibration = function (configFileName) {	
 		console.error('sending config data ');
 		self._write(self._commandstr.setEquilibration);		
-	}
+	};
+	
+	this.setArea = function (x0, y0, xn, yn) {
+		if (xn>self.columns || yn>self.columns){
+			console.error('invalid area');
+			return false;
+		}
+		console.error('setting new acquisition area: ' + x0 + ',' + y0 + ' to ' + xn + ', ' + yn);
+		self._write(self._configstr.eqX0 + x0);
+		self._write(self._configstr.eqXn + xn);
+		self._write(self._configstr.eqY0 + y0);
+		self._write(self._configstr.eqYn + yn);
+		self._write(self._commandstr.setArea);
+	};
 
 };
 

@@ -319,7 +319,7 @@ util.inherits(checkPatient, PatientTask);
 var standStill = function(messageSender, taskName){
 	standStill.super_.call(this, messageSender, taskName);
 	this.timeout = 13000;
-	this.delay = 2000;
+	this.delay = 0;
 	this.totalLoadBuffer = new Uint16Array(chunksPerSecond*bufferLength);
 	this.maxChunks = this.timeout*chunksPerSecond/1000;
 	this.chunks = 0;	
