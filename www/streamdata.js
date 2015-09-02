@@ -28,6 +28,8 @@ function createWS(protocolIndex){
 	case 0:
 		dataProtocol="fullMatrix";
 		createCanvas = function(){
+            dataSpecs.rows = Math.abs(dataSpecs.yn - dataSpecs.y0);
+            dataSpecs.columns = Math.abs(dataSpecs.xn - dataSpecs.x0);
 			myCanvas = new MatrixCanvas(dataSpecs.rows, dataSpecs.columns);
 			dataSpecs.dimension=dataSpecs.rows*dataSpecs.columns;
 			myCSV = new CSV(dataSpecs);

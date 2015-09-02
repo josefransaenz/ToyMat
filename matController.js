@@ -12,8 +12,10 @@ var util = require('util')
 var matController = function (configData){
 	var defaultConfigData = {
 		serialNumber: 'TYMT001',
-		rows : 32, //two chars from 01 to 32
-		columns : 32, //two chars from 01 to 32
+		x0: 0,
+		y0: 0,
+		xn: 32,
+		yn: 32,
 		eqThreshold : 247, // desired digital output
 							 // better if it's equal to pressure in kPa, 
 							 // must have three chars from 000 to 999		
@@ -34,21 +36,16 @@ var matController = function (configData){
     this.configData = new Options(defaultConfigData);
     
     this._setSize = function(){
-    	this.rows = parseInt(this.configData.value.rows);
-    	this.columns = parseInt(this.configData.value.columns);
-    	this.endBytes = parseInt(this.configData.value.endBytes);
+    	this.rows = this.configData.value.xn - this.configData.value.x0;
+    	this.columns = this.configData.value.yn - this.configData.value.y0;
+    	this.endBytes = this.configData.value.endBytes;
     	this.dimension = this.rows*this.columns;
-    	if (this.dimension > 256){
-    		this.bytes = 1;
-    	} else{
-    		this.bytes = 2;
-    	}
-    	this.frameSize = this.dimension*this.bytes+this.endBytes;
-    	this.calibrationOffset = parseInt(this.configData.value.calibrationOffset);
-    	this.calibrationFactor = parseInt(this.configData.value.calibrationWeight)/parseInt(this.configData.value.calibrationOutput);
-    	this.p1 = parseInt(this.configData.value.p1);
-		this.p2 = parseInt(this.configData.value.p2);
-		this.q1 = parseInt(this.configData.value.q1);
+    	this.frameSize = this.dimension + this.endBytes;
+    	this.calibrationOffset = this.configData.value.calibrationOffset;
+    	this.calibrationFactor = this.configData.value.calibrationWeight / this.configData.value.calibrationOutput;
+    	this.p1 = this.configData.value.p1;
+		this.p2 = this.configData.value.p2;
+		this.q1 = this.configData.value.q1;
     };
     this._setSize();
     
@@ -93,10 +90,11 @@ var matController = function (configData){
 	
 	var self = this;
 	this._setConfigData = function(){
-		//self._write(self._configstr.rows + self.configData.value.rows);
-		//self._write(self._configstr.columns + self.configData.value.columns);
+		self._write(self._configstr.eqX0 + self.configData.value.x0);
+		self._write(self._configstr.eqXn + self.configData.value.xn);
+		self._write(self._configstr.eqY0 + self.configData.value.y0);
+		self._write(self._configstr.eqYn + self.configData.value.yn);
 		self._write(self._configstr.eqThreshold + self.configData.value.eqThreshold);
-		//self._write(self._configstr.bytes + self.configData.value.bytes);
 		self._write(self._configstr.pgaGain + self.configData.value.pgaGain);
 	};
 	this._setConfigData();
@@ -131,6 +129,7 @@ var matController = function (configData){
 			quadMean: new Array(4),
 			activePixels: 0
 	};
+	this.chunkBuffer = [];
 		
 	this._echoStream = function (options) { // step 2
 	  stream.Transform.call(this, options);
@@ -187,6 +186,8 @@ var matController = function (configData){
 		}
 	});
 	this.start = function (){
+		self.frame.array = new Array(self.dimension);
+		self.chunkBuffer = new Buffer(self.dimension + 1);
 		self._write(self._commandstr.start);
 		self.frame.count = 0;
 		console.error('start');
@@ -209,64 +210,31 @@ var matController = function (configData){
 	};
 		
 	this.decodeFrame = function (chunk){
-		self.frame.array = new Array(self.dimension);
-		var dim = self.dimension;
 		var i;
-		var endBytes = self.endBytes;
-		var chunk2 = new Buffer(dim+1);
-		chunk2[dim] = chunk[chunk.length-endBytes];//dt
-		self.frame.dt=chunk[chunk.length-endBytes];	
+		self.chunkBuffer[self.dimension] = chunk[chunk.length - self.endBytes];//dt
+		self.frame.dt = self.chunkBuffer[self.dimension];	
 		self.frame.mean = 0;
 		self.frame.load = 0;
 		self.frame.activePixels = 0;
 		var dato;
-		if (self.bytes === 1){	
-			for (i = 0; i < dim; i++){
-				dato = chunk[i] - 40;
-				if (dato === 0) {
-					chunk2[i] = 255;
-					continue;
-				}
-				self.frame.array[i] = self.calibratedOutput(dato);//*4
-				chunk2[i] = dato;
-				dato = self.frame.array[i] - self.configData.value.maxZeroFrame[i];
-				if (dato > 0){
-					if (dato < 255){
-						chunk2[i] = dato;
-					} else {
-						chunk2[i] = 255;
-					}					
-					self.frame.mean += dato;
-					self.frame.activePixels++;
+		for (i = 0; i < self.dimension; i++){
+			dato = chunk[i] - 40;
+			self.frame.array[i] = self.calibratedOutput(dato);//*4
+			self.chunkBuffer[i] = dato;
+			dato = self.frame.array[i] - self.configData.value.maxZeroFrame[i];
+			if (dato > 0){
+				if (dato < 255){
+					self.chunkBuffer[i] = dato;
 				} else {
-					chunk2[i] = 0;
-				}			
-	        }
-			//console.error('load: ' + self.frame.load.toString() + ' + ' + self.frame.activePixels.toString())			
-		} else if (self.bytes === 2){
-			var n=0;
-			for (i = 0; i < chunk.length-endBytes; i = i + 2){
-				//chunk2[n] = (chunk[i+1] - 40) + (chunk[i] - 40);				
-				self.frame.array[n] = (chunk[i] - 40);
-				//self.frame.array[n] *= 4;
-				self.frame.array[n] += chunk[i+1]-40;
-				self.frame.array[n] = self.calibratedOutput(self.frame.array[n]);
-				//self.frame.mean += self.frame.array[n];
-				if (self.frame.array[i] > self.configData.value.maxZeroFrame[i]){
-					
-					if (self.frame.array[i] < 255){
-						chunk2[n] = self.frame.array[n];
-					} else {
-						chunk2[n] = 255;
-					}					
-					self.frame.mean += self.frame.array[n];
-					self.frame.activePixels++;
-				} else {
-					chunk2[n] = 0;
-				}				
-				n++;
+					self.chunkBuffer[i] = 255;
+				}					
+				self.frame.mean += dato;
+				self.frame.activePixels++;
+			} else {
+				self.chunkBuffer[i] = 0;
 			}
-		}		
+		}	        
+				
 		var quad = dataProcessing.quadMean(self.frame.array, self.configData.value.maxZeroFrame);
 		for (var j = 0; j < 4; j++){          
 			self.frame.quadMean[j] = (quad[j]- self.calibrationOffset) * Math.sqrt(self.frame.activePixels) * self.calibrationFactor;
@@ -278,7 +246,7 @@ var matController = function (configData){
 			self.frame.load = (self.frame.mean - self.calibrationOffset) * Math.sqrt(self.frame.activePixels) * self.calibrationFactor;
 			if (self.frame.load < 0) {self.frame.load = 0;}
 		}		
-		return chunk2;
+		return self.chunkBuffer;
 	};
 	
 	this.calibratedOutput = function (data){
@@ -296,10 +264,10 @@ var matController = function (configData){
 			return false;
 		}
 		console.error('equilibrating sensors from:' + x0 + ',' + y0 + 'to ' + xn + ',' + yn);
-		self._write(self._configstr.eqX0 + x0);
-		self._write(self._configstr.eqXn + xn);
-		self._write(self._configstr.eqY0 + y0);
-		self._write(self._configstr.eqYn + yn);
+		self._write(self._configstr.eqX0 + self.configData.value.x0);
+		self._write(self._configstr.eqXn + self.configData.value.xn);
+		self._write(self._configstr.eqY0 + self.configData.value.y0);
+		self._write(self._configstr.eqYn + self.configData.value.yn);
 		self._write(self._commandstr.equilibrate);
 	};
 	
@@ -314,20 +282,6 @@ var matController = function (configData){
 	this.setEquilibration = function (configFileName) {	
 		console.error('sending config data ');
 		self._write(self._commandstr.setEquilibration);		
-	};
-	
-	this.setArea = function (x0, y0, xn, yn) {
-		if (xn > 32 || yn > 32 || xn < x0 || yn < y0){
-			console.error('invalid area');
-			return false;
-		}
-		console.error('setting new acquisition area: ' + x0 + ',' + y0 + ' to ' + xn + ', ' + yn);
-		self._write(self._configstr.eqX0 + x0);
-		self._write(self._configstr.eqXn + xn);
-		self._write(self._configstr.eqY0 + y0);
-		self._write(self._configstr.eqYn + yn);
-		self._write(self._commandstr.setArea);		
-		
 	};
 
 };

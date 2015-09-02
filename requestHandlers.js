@@ -12,7 +12,9 @@ function support(response, request) {
 		 request.on('data', function(chunk) {
 			// there is some data to read now
 			var data = querystring.parse(chunk);
-			if (data.rows !== undefined){
+			if (data.x0 !== undefined){
+				data.x0 = 32 - parseInt(data.x0);
+				data.xn = 32 - parseInt(data.xn);
 				dataHandlers.configController(data);
 			} else if (data.name !== undefined){
 				dataHandlers.setPatient(data);
@@ -26,15 +28,17 @@ function support(response, request) {
 			} 
 		 });
 	 }
+	
 	dataHandlers.getPatient(function(patientData){
 		dataHandlers.getConfigData(function(configData){
-			var rowsId = 'r32';// + configData.rows.toString();
-			var columnsId = 'c32';// + configData.columns.toString();
+			var x0 = 32 - configData.x0;
+			var xn = 32 - configData.xn;
 			var eqThId = 'eqTh';
 			var gainId = 'g' + configData.pgaGain.toString();
 			var p1Id = 'p1';
 			var p2Id = 'p2';
 			var q1Id = 'q1';
+			
 			var head = '<!DOCTYPE html>'+
 			'<html>'+
 			'<head>'+
@@ -44,11 +48,11 @@ function support(response, request) {
 				'<link rel="stylesheet" href="/bootstrap-3.3.4-dist/css/bootstrap.min.css">'+ 
 				'<script>'+'\n'+
 				'function myFunction() {'+'\n'+
-					'document.getElementById("serial").innerHTML = "'+configData.serialNumber+'";'+'\n'+
-					'var rowId = document.getElementById("'+rowsId+'");'+'\n'+
-					'rowId.checked="checked";'+'\n'+
-					'var colId = document.getElementById("'+columnsId+'");'+'\n'+
-					'colId.checked="checked";'+'\n'+
+					'document.getElementById("serialNumber").innerHTML = "'+configData.serialNumber+'";'+'\n'+
+					'$("#x0").val("' + x0 + '");'+'\n'+
+					'$("#y0").val("' + configData.y0 + '");'+'\n'+
+					'$("#xn").val("' + xn + '");'+'\n'+
+					'$("#yn").val("' + configData.yn + '");'+'\n'+
 					'var eqThId = document.getElementById("'+eqThId+'");'+'\n'+
 					'eqThId.value='+configData.eqThreshold.toString()+';'+'\n'+
 					'var gainId = document.getElementById("'+gainId+'");'+'\n'+
@@ -59,10 +63,10 @@ function support(response, request) {
 					'p2Id.value='+configData.p2.toString()+';'+'\n'+
 					'var q1Id = document.getElementById("'+q1Id+'");'+'\n'+
 					'q1Id.value='+configData.q1.toString()+';'+'\n'+
-					'$("#name").val("' + patientData.name + '");'+
-					'$("#lastname").val("' + patientData.lastname + '");'+
-					'$("#weight").val("' + patientData.weight.toString() + '");'+
-					'$("#age").val("' + patientData.age.toString() + '");'+
+					'$("#name").val("' + patientData.name + '");'+'\n'+
+					'$("#lastname").val("' + patientData.lastname + '");'+'\n'+
+					'$("#weight").val("' + patientData.weight.toString() + '");'+'\n'+
+					'$("#age").val("' + patientData.age.toString() + '");'+'\n'+
 				'}'+'\n'+
 				'</script>'	+'\n'+
 			'</head>';

@@ -20,7 +20,16 @@ var patientProfileFile = '/patientProfile.JSON';
 
 toymat.readConfigData(pathName + configFile);
 
-function configController(configData){
+function configController(data){	
+	var configData = {};
+	for (var x in data) {
+		configData[x] = parseInt(data[x]);
+	}
+	if (configData.xn > 32 || configData.yn > 32 || configData.xn < configData.x0 || configData.yn < configData.y0){
+		console.error('invalid area: ' + configData.x0 + ',' + configData.y0 + ' to ' + configData.xn + ', ' + configData.yn);
+		return false;
+	}
+	console.error('setting new acquisition area: ' + configData.x0 + ',' + configData.y0 + ' to ' + configData.xn + ', ' + configData.yn);
 	toymat.writeConfigData(configData, pathName + configFile);
 }
 
@@ -135,15 +144,6 @@ function setEquilibration(){
 	}
 }
 exports.setEquilibration = setEquilibration;
-
-function setArea(rect){
-	toymat.setArea(32 - rect.x0, rect.y0, 32 - rect.xn, rect.yn);
-	configController({
-		rows: Math.abs(rect.xn - rect.x0),
-		columns: rect.yn - rect.y0
-		});
-}
-exports.setArea = setArea;
 
 var actions = {
 		"checkProtocol" : 0,
