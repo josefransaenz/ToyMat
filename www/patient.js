@@ -12,6 +12,7 @@ var start_button = document.getElementById("start_button");
 var cancel_button = document.getElementById("cancel_button");
 var progress_bar = document.getElementById("progress_bar");
 var load_bar = document.getElementById("load_bar");
+var sequence = document.getElementById("sequence");
 
 var canvasDim;
 if (window.innerWidth > window.innerHeight){
@@ -36,6 +37,8 @@ ws.onopen = function (event) {
 	main_jumbotron.appendChild(start_button);	
 	myCanvas = new QuadCanvas();
     command = {"action" : 'start'};
+	ws.send(JSON.stringify(command));
+    command = {"action" : {sequence: sequence.value}};
 	ws.send(JSON.stringify(command));
 };
 ws.onmessage = function (event) {

@@ -11,7 +11,7 @@
         <h2>ToyMat caregiver page </h2>
         <div class="row">
             <div class="col-sm-6" id="main_col">
-                
+                <button type="button" class="btn btn-default" onclick="window.location.href='/'">Back to index</button>
                 Stato della communicazione: <output id="msg" style="display: inline;"></output>
                 <br>
                 <br>
@@ -21,6 +21,7 @@
                 <h4>Attività registrate:</h4>
                 <select id="taskSelect">
                     <option value=null>Selezionare una attività...</option>
+                    <option value="fixDuration">Registri di durata fissa</option>
                     <option value="standStill">Equillibrio con feedback visivo</option>
                     <option value="standUp">Movimento da seduto a in piede</option>
                     <option value="standStillBlind">Equillibrio senza feedback visivo</option>
@@ -60,7 +61,8 @@
             </div>
             <canvas id="myCanvas" ></canvas>
             <input type="range" id="frames_range" value="0">
-        </div>           
+        </div> 
+        
     </div>
      
     <!-- Bootstrap core JavaScript

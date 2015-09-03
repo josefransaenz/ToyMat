@@ -62,6 +62,7 @@ var messages = {
 		standUp: "Adesso provi ad alzarsi in piedi, preferibilmente senza appogiare le mani (se riesce provi a farlo con " +
 				"le braccia incrociate)",
 		standStillBlind: "Adesso, tenendo gli occhi chiusi, provi a non muoversi tenendo le braccia lungo il corpo e la schiena dritta",
+		fixDuration: "Verrà registrata la distribuzione di pressione nell'area impostata durante 30 secondi",
 		end: "Il test è finito. Per adesso è tutto, grazie!"
 	};
 
@@ -74,6 +75,7 @@ var errMessages = {
 		sitDown: "sit down error",
 		standUp: "stand up error",
 		standStillBlind: "standStill2 error",	
+		fixDuration: "fixDuration error"
 };
 
 exports.RUNNING = 0;
@@ -368,6 +370,8 @@ var standStill = function(messageSender, taskName){
 		for (var i = 0; i < frame.array.length; i++){
 			frame2save.array[i] = frame.array[i];
 		}
+		frame2save.rows = frame.rows;
+		frame2save.columns = frame.columns;
 		frame2save.dt = frame.dt;
 		frame2save.count = frame.count;
 		frame2save.mean = frame.mean;
@@ -476,6 +480,8 @@ var standUp = function(messageSender, taskName){
 		for (var i = 0; i < frame.array.length; i++){
 			frame2save.array[i] = frame.array[i];
 		}
+		frame2save.rows = frame.rows;
+		frame2save.columns = frame.columns;
 		frame2save.dt = frame.dt;
 		frame2save.count = frame.count;
 		frame2save.mean = frame.mean;
@@ -529,6 +535,17 @@ var standStillBlind = function(messageSender, taskName){
 };
 util.inherits(standStillBlind, standStill);
 
+/*-------------
+ * fixDuration
+ * addEventListener "fullWeight" to do something once average output is more than a threshold and is stable
+ */
+//var patientFolder = '/' + patientProfile.lastName + patientProfile.name + "_Files";
+var fixDuration = function(messageSender, taskName){
+	standStill.call(this, messageSender, taskName);
+	this.timeout = 30000;
+};
+util.inherits(fixDuration, standStill);
+
 exports.loadProfile = loadProfile;
 exports.welcome = welcome;
 exports.end = end;
@@ -538,3 +555,4 @@ exports.standStill = standStill;
 exports.sitDown = sitDown;
 exports.standUp = standUp;
 exports.standStillBlind = standStillBlind;
+exports.fixDuration = fixDuration;

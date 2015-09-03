@@ -400,8 +400,16 @@ function plotMeasures(measures, labels){
 
 //display frames
 function displayFrames(frames){
-    var frameDim = Math.floor(Math.sqrt(frames[0].array.length));
-	matrixCanvas = new MatrixCanvas(frameDim, frameDim);
+    var rows;
+	var columns;
+	if (frames[0].rows !== undefined) {
+		rows = frames[0].rows;
+		columns = frames[0].columns;
+	} else {
+		rows = Math.floor(Math.sqrt(frames[0].array.length));
+		columns = rows;
+	}
+	matrixCanvas = new MatrixCanvas(rows, columns);
     matrixCanvas.data = frames[0].array;
     matrixCanvas.dt = frames[0].dt;
     matrixCanvas.draw();
@@ -500,7 +508,12 @@ var MatrixCanvas = function (rows, columns){
 	var canvas = document.getElementById('myCanvas');
 	var context = canvas.getContext('2d');
 	context.clearRect(0, 0, canvas.width, canvas.height);
-	var dim = Math.round(canvas.width*0.028)*32/rows;//******** modify
+    var dim;
+    if (rows > columns){
+        dim = Math.round(canvas.width*0.028)*32/rows;//******** modify
+    } else {
+        dim = Math.round(canvas.width*0.028)*32/columns;//******** modify
+    }
 	var fontDim = dim/4;
 	var widths = Math.round(canvas.width*0.012);
 	var myRectangle = {

@@ -92,7 +92,7 @@ function tare(cb){
 	        			maxx = maxArray[n];
 	        		}
 	        	}
-	        	console.error('max tare value: ' + maxx.toString());
+	        	console.error('max tare value: ' + maxx.toString() + ', maxArray: ' + JSON.stringify(maxArray));
 	        	toymat.writeConfigData({"calibrationOffset": sum, "maxZeroFrame": maxArray}, pathName + configFile);
 	        	patientOnline = false;
 				if (typeof cb === 'function'){
@@ -153,7 +153,8 @@ var actions = {
 		"end" : 4
 };
 
-var sequence = {
+var sequenceType = {};
+sequenceType.patient = {
 		step0: 'welcome',
 		step1: 'tare',//no action, wait button next
 		step2: 'checkPatient',//auto start, detect weight increase, auto call next (timeouts and msg if not stable)
@@ -164,6 +165,20 @@ var sequence = {
 		step7: 'end',
 		last: 8
 };
+sequenceType.fixDuration = {
+		step0: 'welcome',
+		step1: 'fixDuration',
+		step2: 'end',
+		last: 3
+};
+sequenceType.sitToStand = {
+		step0: 'welcome',
+		step1: 'sitDown',
+		step2: 'standUp',
+		step3: 'end',
+		last: 4
+};
+var sequence = sequenceType.patient;
 
 var patientOnline = false;
 var testStep = 0;
@@ -171,10 +186,16 @@ var patientStream = {};
 var taskReady = true;
 var cont = 0;
 var task = {};
+var multiTask = true;
+var taskName = '';
 
 function fitTest0(action, ws){
 	function messageSender(message){
 		ws.send(JSON.stringify(message), function() { });
+	}
+	if (action.sequence !== undefined) {
+		sequence = sequenceType[action.sequence];
+		return true;
 	}
 	switch(actions[action]) {
 	case actions["checkProtocol"]://entry message
@@ -191,9 +212,9 @@ function fitTest0(action, ws){
 	case actions["start"]:
 		console.log("starting patient session");		
 		break;	
-	case actions["nextStep"]:
+	case actions["nextStep"]:		
 		console.log("next step: " + testStep.toString());			
-		var taskName = sequence['step' + testStep.toString()];		
+		taskName = sequence['step' + testStep.toString()];			
 		task = new patientTasks[taskName](messageSender, taskName);		
 				
 		toymat.dataStream.on('data', function(chunk) {			
@@ -204,11 +225,11 @@ function fitTest0(action, ws){
 			toymat.dataStream.removeAllListeners('data');
 			toymat.removeAllListeners('idle');
 			toymat.stop();
-			messageSender(message);
+			messageSender(message);			
 			testStep++;
 			if (testStep === sequence.last){
 				testStep = 0;			
-			}	
+			}						
 		});
 		
 		task.on('progress', function(message){
@@ -237,8 +258,7 @@ function fitTest0(action, ws){
 					nextImage: null
 			};
 			messageSender(message);
-		});
-			 
+		});			 
 		break;	
 	case actions["stop"]:
 		console.log("ending patient session");
@@ -247,7 +267,7 @@ function fitTest0(action, ws){
 		if (task.state === task.RUNNING && task.stop !== undefined) {
 			task.stop();
 			toymat.stop();
-		} 				
+		} 
 		if (ws.readyState === ws.OPEN){
 			testStep = sequence.last-1;
 			setTimeout(function(){

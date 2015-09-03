@@ -122,6 +122,8 @@ var matController = function (configData){
 	
 	this.frame = {
 			array: [],
+			rows: 0,
+			columns: 0,
 			dt: 0,
 			mean: 0,
 			load: 0,
@@ -187,6 +189,8 @@ var matController = function (configData){
 	});
 	this.start = function (){
 		self.frame.array = new Array(self.dimension);
+		self.frame.rows = self.rows;
+		self.frame.columns = self.columns;
 		self.chunkBuffer = new Buffer(self.dimension + 1);
 		self._write(self._commandstr.start);
 		self.frame.count = 0;

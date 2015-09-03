@@ -196,6 +196,11 @@ function sendFile(response, fileName) {
 	});		
 }
 
+function index(response, request) {
+	//console.log("sending script stream");	
+	response.writeHead(200, {"Content-Type": "text/html"});  
+	fs.createReadStream(pathName + '/www' + "/index.html").pipe(response);
+}
 
 exports.support = support;
 exports.streamdata = streamdata;
@@ -204,3 +209,4 @@ exports.calibrate = calibrate;
 exports.patient = patient;
 exports.caregiver = caregiver;
 exports.sendFile = sendFile;
+exports.index = index;
