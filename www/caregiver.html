@@ -15,10 +15,15 @@
                 Stato della communicazione: <output id="msg" style="display: inline;"></output>
                 <br>
                 <br>
-                <label for="patient">Paziente: </label> <output id="patient_name" style="display: inline;"> Default name</output>
-                <label for="age"> Età: </label> <output id="patient_age" style="display: inline;"> 00 years</output>
-                <label for="weight"> Peso: </label> <output id="patient_weight" style="display: inline;"> 00 kg</output>
-                <h4>Attività registrate:</h4>
+                <select id="patient_select">
+                    <option value=null>Selezzionare il paziente</option>
+                </select>
+                <br>
+                <div id="patient_details">
+                    <label for="patient">Paziente: </label> <output id="patient_name" style="display: inline;"></output>
+                    <label for="age"> Età: </label> <output id="patient_age" style="display: inline;"> </output>
+                    <label for="weight"> Peso: </label> <output id="patient_weight" style="display: inline;"> </output>                
+                </div>                            
                 <select id="taskSelect">
                     <option value=null>Selezionare una attività...</option>
                     <option value="fixDuration">Registri di durata fissa</option>

@@ -239,7 +239,7 @@ var matController = function (configData){
 			}
 		}	        
 				
-		var quad = dataProcessing.quadMean(self.frame.array, self.configData.value.maxZeroFrame);
+		var quad = [0,0,0,0];//dataProcessing.quadMean(self.frame, self.configData.value.maxZeroFrame);
 		for (var j = 0; j < 4; j++){          
 			self.frame.quadMean[j] = (quad[j]- self.calibrationOffset) * Math.sqrt(self.frame.activePixels) * self.calibrationFactor;
 		}

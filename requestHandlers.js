@@ -18,7 +18,6 @@ function support(response, request) {
 				dataHandlers.configController(data);
 			} else if (data.name !== undefined){
 				dataHandlers.setPatient(data);
-				dataHandlers.setArea(data);
 			} else if (data.tare !== undefined){
 				dataHandlers.tare();
 			} else if (data.getEquilibration !== undefined){

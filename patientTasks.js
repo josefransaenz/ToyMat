@@ -3,6 +3,7 @@
  */
 
 "use strict";
+
 var util = require('util')
 	, EventEmitter = require('events').EventEmitter
 	, exec = require('child_process').exec;
@@ -24,17 +25,21 @@ function loadProfile(pathName, patientProfileFile, cb){
         if(err){ // If error occurs
             console.error("Patient file error.");
         } else{
-        	patientFolder = pathName + '/' + patientProfile.value.lastname + patientProfile.value.name + "_Files";
-        	fs.exists(patientFolder, function (exists) {
-        		if (!exists){
-        			fs.mkdir(patientFolder, function(err){
-        				if (err){
-        					console.error("Patient folder error." + err);
-        				}        				
-        			});
-        		}
-        	});
-        }
+        	var dataFolder = pathName + '/data';
+        	console.error("Checking data folder: " + dataFolder);
+        	fs.mkdir(dataFolder, function(err){
+				if (err){
+					console.error("Data folder error." + err);
+				}
+				patientFolder = dataFolder + '/' + patientProfile.value.lastname + '_' + patientProfile.value.name;
+				console.error("Checking patient folder: " + patientFolder);
+	        	fs.mkdir(patientFolder, function(err){
+    				if (err){
+    					console.error("Patient folder error." + err);
+    				}        				
+    			});		        
+		    });
+		} 
         if (typeof cb === 'function'){
         	cb(patientProfile.value);
         }

@@ -401,6 +401,7 @@ var taskUnits = {
 		standStillBlind: this.standStill
 }
 
+var dataFolder = pathName + '/data';
 var patientFolder;
 var taskFolder;
 function readFiles(action, websocket){
@@ -408,14 +409,44 @@ function readFiles(action, websocket){
 	if (actions[action] === actions.checkProtocol){
 		return true;
 	}
-	if (action.task === null){
-		getPatient(function(patientData){
-			patientFolder = pathName + '/' + patientData.lastname + patientData.name + "_Files";
-			message = {"patientData" : patientData, "tasks": ["standStill", "standUp", "standStillBlind"]};
+	if (action.patient === null){
+		fs.readdir(dataFolder, function (err, files) {
+    		if (err){
+    			message = {"error" : "No patient data found! "};
+    			websocket.send(JSON.stringify(message));
+    			return;
+    		}
+    		message = {"patientList" : files};
+			websocket.send(JSON.stringify(message));
+			console.log("sending patient list to caregiver...");
+		});
+	} else	if (action.task === null){
+		patientFolder = dataFolder + '/' + action.patient;
+		fs.readdir(patientFolder, function (err, files) {
+    		if (err){
+    			message = {"error" : "No data for patient: " + action.patient};
+    			websocket.send(JSON.stringify(message));
+    			return;
+    		}
+    		var separatorIndex =  action.patient.search('_');
+    		if (separatorIndex<0){
+    			message = {"error" : "No valid patient: " + action.patient};
+    			websocket.send(JSON.stringify(message));
+    			return;
+    		}
+    		message = {
+    				"taks" : files, 
+    				"patientData" : {
+    					name: action.patient.slice(separatorIndex),
+    					lastname: action.patient.slice(0, separatorIndex),
+    					age: '00',
+    					weight: '00'
+    				} 
+    		};
 			websocket.send(JSON.stringify(message));
 			console.log("sending patient data to caregiver...");
-			taskFolder = undefined;
 		});
+		taskFolder = undefined;		
 	} else if (action.file === null){
 		if (patientFolder === undefined) {return;}
 		taskFolder = patientFolder + '/' + action.task;

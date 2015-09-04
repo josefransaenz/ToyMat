@@ -2,9 +2,12 @@
  * 
  */
 "use strict";
+var patient_select = document.getElementById("patient_select");
+var patient_details = document.getElementById("patient_details");
 var patient_name = document.getElementById("patient_name");
 var patient_age = document.getElementById("patient_age");
 var patient_weight = document.getElementById("patient_weight");
+var taskSelect = document.getElementById('taskSelect');
 var taskFiles_select = document.getElementById("taskFiles_select");
 var taskDetails = document.getElementById("taskDetails");
 var canvas_type = document.getElementById("canvas_type");
@@ -17,11 +20,15 @@ var frames_range = document.getElementById('frames_range');
 taskDetails.style.visibility = "hidden";
 graph_div.style.visibility = "hidden";
 
+var patientList = [];
+var patientList_items = [];
+var patient = null;
 var task = "standStill";
 var taskFiles = [];
 var taskFiles_items = [];
 var readingAllFiles = false;
 var fileCounter = 0;
+main_col.removeChild(taskSelect);
 main_col.removeChild(taskFiles_select);
 myCanvas.style.visibility = "hidden";
 frames_range.style.visibility = "hidden";
@@ -79,14 +86,37 @@ var ws = new WebSocket('ws://' + host + ':8888'+'/caregiver',  'readFiles');
 document.getElementById('msg').innerHTML = 'establishing connection...';
 ws.onopen = function (event) {
 	document.getElementById('msg').innerHTML = "connected";
-	var message = {"action" : {'task': null}};
+	var message = {"action" : {'patient': null}};
     ws.send(JSON.stringify(message));
-    document.getElementById('msg').innerHTML = "scaricando i dati del paziente...";
+    document.getElementById('msg').innerHTML = "scaricando l'elenco dei pazienti...";
 };
 ws.onmessage = function (event) {
 	var bufferData = event.data;
 	var data = JSON.parse(bufferData);
-	if (data.patientData !== undefined){
+    if (data.patientList !== undefined){        
+		taskDetails.style.visibility = "hidden";
+        graph_div.style.visibility = "hidden";
+        canvas_type.style.visibility = "hidden";
+        myCanvas.style.visibility = "hidden";
+        frames_range.style.visibility = "hidden";
+		patientList = data.patientList;
+		for (n = 0; n < patientList.length; n++){
+			patientList_items[n] =  document.createElement("OPTION");
+			patientList_items[n].value = n;
+			patientList_items[n].innerHTML = patientList[n];
+			patient_select.appendChild(patientList_items[n]);
+		}
+		patient_select.selectedIndex = 0;
+		document.getElementById('msg').innerHTML = "Ok";
+    } else if (data.patientData !== undefined){
+        if (!main_col.contains(taskSelect)){
+			main_col.appendChild(taskSelect);
+		}
+        taskDetails.style.visibility = "hidden";
+        graph_div.style.visibility = "hidden";
+        canvas_type.style.visibility = "hidden";
+        myCanvas.style.visibility = "hidden";
+        frames_range.style.visibility = "hidden";
 		patient_name.innerHTML = data.patientData.name + ' ' + data.patientData.lastname;
 		patient_age.innerHTML = data.patientData.age + ' anni';
 		patient_weight.innerHTML = data.patientData.weight + ' kg';
@@ -166,8 +196,16 @@ ws.onmessage = function (event) {
 	}		
 }	
 	
+//patient selection
+patient_select.addEventListener('input', changePatient); 
+function changePatient(){
+	patient = patient_select.value;
+	var message = {"action" : {patient: patientList[patient], 'task': null}};
+    ws.send(JSON.stringify(message));
+    document.getElementById('msg').innerHTML = "scaricando i dati del paziente...";	
+}
+
 //task selection
-var taskSelect=document.getElementById('taskSelect');
 taskSelect.addEventListener('input', changeTask); 
 function changeTask(){
 	task = taskSelect.value;
