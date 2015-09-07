@@ -112,22 +112,6 @@ function cancelTask(){
 	ws.send(JSON.stringify(command));
 }
 
-function setAnnyang(){
-    // Let's define a command.
-    var commands = {
-        'next': nextTask,
-        'cancel': cancelTask,
-        'stop here': cancelTask,
-        'go ahead': nextTask,
-        'help': function() { alert('Aiuto!'); }  
-    };
-
-    // Add our commands to annyang
-    annyang.addCommands(commands);
-    //annyang.setLanguage("it-IT");
-}
-setTimeout(setAnnyang,1000);
-
 var QuadCanvas = function(){
 	this.data = new Uint16Array(4);
 	this.dt = 0;

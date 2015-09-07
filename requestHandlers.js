@@ -34,6 +34,7 @@ function support(response, request) {
 			var xn = 32 - configData.xn;
 			var eqThId = 'eqTh';
 			var gainId = 'g' + configData.pgaGain.toString();
+			var saveRawId = 's' + configData.saveRaw;
 			var p1Id = 'p1';
 			var p2Id = 'p2';
 			var q1Id = 'q1';
@@ -52,6 +53,8 @@ function support(response, request) {
 					'$("#y0").val("' + configData.y0 + '");'+'\n'+
 					'$("#xn").val("' + xn + '");'+'\n'+
 					'$("#yn").val("' + configData.yn + '");'+'\n'+
+					'var saveRawId = document.getElementById("'+saveRawId+'");'+'\n'+
+					'saveRawId.checked = "checked";'+'\n'+
 					'var eqThId = document.getElementById("'+eqThId+'");'+'\n'+
 					'eqThId.value='+configData.eqThreshold.toString()+';'+'\n'+
 					'var gainId = document.getElementById("'+gainId+'");'+'\n'+

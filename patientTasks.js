@@ -288,6 +288,7 @@ var checkPatient = function(messageSender, taskName){
 	this.chunks = 0;	
 	this.minLoad = patientProfile.value.weight*(1 - weightTolerance);
 	this.maxLoad = patientProfile.value.weight*(1 + weightTolerance);
+	this.ending = false;
 
 	this.on('start', function(){
 		this.state = this.RUNNING;
@@ -299,11 +300,13 @@ var checkPatient = function(messageSender, taskName){
 		if (this.state !== this.RUNNING) {return;}
 		var meanLoad = dataProcessing.mean(this.totalLoadBuffer);
 		var stdLoad = dataProcessing.std(this.totalLoadBuffer);
-		if (meanLoad > this.minLoad){// && meanLoad < this.maxLoad && stdLoad < maxStd){			
+		if (meanLoad > this.minLoad && !this.ending){// && meanLoad < this.maxLoad && stdLoad < maxStd){			
+			this.ending = true;
 			var self = this;
 			setTimeout(function(){
-				self.emit('complete', this.completeMessage);
+				self.emit('complete', self.completeMessage);
 				self.stop();
+				self.ending = false;
 				console.error('checkPatient task end ok');
 			}, 3000);//delay for stabilization
 		} else{
@@ -380,6 +383,7 @@ var standStill = function(messageSender, taskName){
 		}
 		frame2save.rows = frame.rows;
 		frame2save.columns = frame.columns;
+		frame2save.raw = frame.raw;
 		frame2save.dt = frame.dt;
 		frame2save.count = frame.count;
 		frame2save.mean = frame.mean;
@@ -491,6 +495,7 @@ var standUp = function(messageSender, taskName){
 		}
 		frame2save.rows = frame.rows;
 		frame2save.columns = frame.columns;
+		frame2save.raw = frame.raw;
 		frame2save.dt = frame.dt;
 		frame2save.count = frame.count;
 		frame2save.mean = frame.mean;

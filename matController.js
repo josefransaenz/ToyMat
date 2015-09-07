@@ -21,6 +21,7 @@ var matController = function (configData){
 							 // must have three chars from 000 to 999		
 		pgaGain : 1, //gain parameter for PGA, single char '1' means gain x2 (see PGA datasheet)
 		endBytes : 2, //number of bytes at the end of each frame, 2 = dt + newLine char
+		saveRaw : "0",
 		p1: 644,
 		p2: 2465,
 		q1: 80,
@@ -124,6 +125,7 @@ var matController = function (configData){
 			array: [],
 			rows: 0,
 			columns: 0,
+			raw: 0,
 			dt: 0,
 			mean: 0,
 			load: 0,
@@ -191,6 +193,7 @@ var matController = function (configData){
 		self.frame.array = new Array(self.dimension);
 		self.frame.rows = self.rows;
 		self.frame.columns = self.columns;
+		self.frame.raw = self.configData.value.saveRaw;
 		self.chunkBuffer = new Buffer(self.dimension + 1);
 		self._write(self._commandstr.start);
 		self.frame.count = 0;
@@ -240,8 +243,12 @@ var matController = function (configData){
 				quadrant = 3;
 			}
 			dato = chunk[index] - 40;
-			self.frame.array[index] = self.calibratedOutput(dato);//*4
-			self.chunkBuffer[index] = dato;
+			self.chunkBuffer[index] = dato;			
+			if (self.configData.value.saveRaw == 0){
+				self.frame.array[index] = self.calibratedOutput(dato);//*4
+			} else {
+				self.frame.array[index] = dato;
+			}		
 			dato = self.frame.array[index] - self.configData.value.maxZeroFrame[index];
 			if (dato > 0){
 				if (dato < 255){
@@ -271,6 +278,7 @@ var matController = function (configData){
 			} else {
 				suma[quadrant] /= (activePixels[quadrant]);//(halfrows*halfcols);
 			    self.frame.quadMean[quadrant] = (suma[quadrant]- self.calibrationOffset) * Math.sqrt(activePixels[quadrant]) * self.calibrationFactor;
+			    self.frame.quadMean[quadrant] = Math.round(self.frame.quadMean[quadrant]);
 			}					    
 		}		
 	    
@@ -280,7 +288,9 @@ var matController = function (configData){
 			self.frame.mean /= self.frame.activePixels;
 			self.frame.load = (self.frame.mean - self.calibrationOffset) * Math.sqrt(self.frame.activePixels) * self.calibrationFactor;
 			if (self.frame.load < 0) {self.frame.load = 0;}
-		}		
+		}
+		self.frame.mean = Math.round(self.frame.mean);
+		self.frame.load = Math.round(self.frame.load);
 		return self.chunkBuffer;
 	};
 	
@@ -289,7 +299,7 @@ var matController = function (configData){
 		if (pressure < 0){
 			pressure = 0;
 		}
-		return pressure;
+		return Math.round(pressure);
 	};
 	
 	this.equilibrateSensors = function (x0, y0, xn, yn){		

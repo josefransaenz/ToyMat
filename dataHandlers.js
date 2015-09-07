@@ -462,14 +462,21 @@ function readFiles(action, websocket){
 		});
 	} else if (action.file !== undefined && action.file !== null){
 		if (taskFolder === undefined) {return;}
-		fs.readFile(taskFolder + '/' + action.file, function (err, data) {			
+		fs.readFile(taskFolder + '/' + action.file, function (err, data) {	
+			var message;
 			if (err){
-				var message = {"error" : "No data for file: " + action.file};
+				message = {"error" : "No data for file: " + action.file};
 				websocket.send(JSON.stringify(message));
 				console.error('Error reading task file' + action.file);
 				return;
 			}
-			websocket.send(JSON.stringify(JSON.parse(data)));
+			try {
+				message = JSON.parse(data);
+			} catch (err){
+				message = {"error" : "Error parsing data from file"};
+				console.error("Error parsing data from file");
+			}
+			websocket.send(JSON.stringify(message));
 			console.log("sending task file: " + action.file + " to caregiver...");
 		});		
 	}		
