@@ -36,8 +36,8 @@ var matController = function (configData){
     this.configData = new Options(defaultConfigData);
     
     this._setSize = function(){
-    	this.rows = this.configData.value.xn - this.configData.value.x0;
-    	this.columns = this.configData.value.yn - this.configData.value.y0;
+    	this.columns = this.configData.value.xn - this.configData.value.x0;
+    	this.rows = this.configData.value.yn - this.configData.value.y0;
     	this.endBytes = this.configData.value.endBytes;
     	this.dimension = this.rows*this.columns;
     	this.frameSize = this.dimension + this.endBytes;
@@ -214,35 +214,66 @@ var matController = function (configData){
 	};
 		
 	this.decodeFrame = function (chunk){
-		var i;
+		var dato,
+			index,
+			row = 0, 
+			col = 0,
+			quadrant,
+			halfcols = self.columns/2,
+		    halfrows = self.rows/2,
+		    suma = [0, 0, 0, 0],
+			activePixels = [0, 0, 0, 0];
 		self.chunkBuffer[self.dimension] = chunk[chunk.length - self.endBytes];//dt
 		self.frame.dt = self.chunkBuffer[self.dimension];	
 		self.frame.mean = 0;
 		self.frame.load = 0;
 		self.frame.activePixels = 0;
-		var dato;
-		for (i = 0; i < self.dimension; i++){
-			dato = chunk[i] - 40;
-			self.frame.array[i] = self.calibratedOutput(dato);//*4
-			self.chunkBuffer[i] = dato;
-			dato = self.frame.array[i] - self.configData.value.maxZeroFrame[i];
+		
+		for (index = 0; index < self.dimension; index++){
+			if (col < halfcols && row < halfrows){
+				quadrant = 0;
+			} else if (col >= halfcols && row < halfrows){
+				quadrant = 1;
+			} else if (col < halfcols && row >= halfrows){
+				quadrant = 2;
+			} else {
+				quadrant = 3;
+			}
+			dato = chunk[index] - 40;
+			self.frame.array[index] = self.calibratedOutput(dato);//*4
+			self.chunkBuffer[index] = dato;
+			dato = self.frame.array[index] - self.configData.value.maxZeroFrame[index];
 			if (dato > 0){
 				if (dato < 255){
-					self.chunkBuffer[i] = dato;
+					self.chunkBuffer[index] = dato;
 				} else {
-					self.chunkBuffer[i] = 255;
+					self.chunkBuffer[index] = 255;
 				}					
 				self.frame.mean += dato;
 				self.frame.activePixels++;
+				suma[quadrant] += dato;  
+	        	activePixels[quadrant]++;
 			} else {
-				self.chunkBuffer[i] = 0;
+				self.chunkBuffer[index] = 0;
 			}
-		}	        
-				
-		var quad = [0,0,0,0];//dataProcessing.quadMean(self.frame, self.configData.value.maxZeroFrame);
-		for (var j = 0; j < 4; j++){          
-			self.frame.quadMean[j] = (quad[j]- self.calibrationOffset) * Math.sqrt(self.frame.activePixels) * self.calibrationFactor;
+			col++;
+			if (col >= self.columns){
+				col = 0;
+				row++;
+				if (row >= self.rows){
+					row = 0;
+				}
+			}
 		}
+		for (quadrant = 0; quadrant < 4; quadrant++){
+			if (activePixels[quadrant] === 0) {
+				self.frame.quadMean[quadrant] = 0;
+			} else {
+				suma[quadrant] /= (activePixels[quadrant]);//(halfrows*halfcols);
+			    self.frame.quadMean[quadrant] = (suma[quadrant]- self.calibrationOffset) * Math.sqrt(activePixels[quadrant]) * self.calibrationFactor;
+			}					    
+		}		
+	    
 		if (self.frame.activePixels === 0){
 			self.frame.mean = 0;
 		} else {

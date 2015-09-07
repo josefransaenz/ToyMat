@@ -102,7 +102,7 @@ var time = date.getTime();
  */
 var chunksPerSecond = 10; //depends of controller sampling frequency
 var maxZeroLoad = 3; //maximun expected output at zero load
-var weightTolerance = 0.2;// weigth measuring tolerance in %
+var weightTolerance = 0.3;// weigth measuring tolerance in %
 var maxStd = 4; //maximun standard deviation for considering a stable load
 var bufferLength = 3; //size of the load buffer in seconds (this is used for computing the mean and std)
 
@@ -281,7 +281,7 @@ util.inherits(tare, PatientTask);
  */
 var checkPatient = function(messageSender, taskName){
 	checkPatient.super_.call(this, messageSender, taskName);
-	this.timeout = 30000;
+	this.timeout = 10000;
 	this.delay = 2000;
 	this.totalLoadBuffer = new Uint16Array(chunksPerSecond*bufferLength);
 	this.maxChunks = this.timeout*chunksPerSecond/1000;
@@ -299,10 +299,13 @@ var checkPatient = function(messageSender, taskName){
 		if (this.state !== this.RUNNING) {return;}
 		var meanLoad = dataProcessing.mean(this.totalLoadBuffer);
 		var stdLoad = dataProcessing.std(this.totalLoadBuffer);
-		if (meanLoad > this.minLoad){// && meanLoad < this.maxLoad && stdLoad < maxStd){
-			this.emit('complete', this.completeMessage);
-			this.stop();
-			console.error('checkPatient task end ok');
+		if (meanLoad > this.minLoad){// && meanLoad < this.maxLoad && stdLoad < maxStd){			
+			var self = this;
+			setTimeout(function(){
+				self.emit('complete', this.completeMessage);
+				self.stop();
+				console.error('checkPatient task end ok');
+			}, 3000);//delay for stabilization
 		} else{
 			this.progressMessage.progress = Math.round(this.seconds/this.timeout*100000);
 			this.progressMessage.load = meanLoad;
@@ -325,7 +328,7 @@ util.inherits(checkPatient, PatientTask);
 
 var standStill = function(messageSender, taskName){
 	standStill.super_.call(this, messageSender, taskName);
-	this.timeout = 13000;
+	this.timeout = 30000;
 	this.delay = 0;
 	this.totalLoadBuffer = new Uint16Array(chunksPerSecond*bufferLength);
 	this.maxChunks = this.timeout*chunksPerSecond/1000;
@@ -400,6 +403,7 @@ var standStill = function(messageSender, taskName){
 	
 	this.on('timeout', function (){
 		this.emit('complete', this.completeMessage);
+		if (!self.saving) { return;}
 		self.writestream.end('],"length":' + this.chunks + '}');
 		self.saving = false;
 		this.stop();
@@ -503,11 +507,13 @@ var standUp = function(messageSender, taskName){
 	});
 	
 	this.on('complete', function(){
+		if (!self.saving) { return;}
 		self.writestream.end('],"length":' + this.chunks + '}');
 		self.saving = false;
 	});
 	
 	this.on('timeout', function(){
+		if (!self.saving) { return;}
 		self.writestream.end('],"length":' + this.chunks + '}');
 		self.saving = false;
 	});

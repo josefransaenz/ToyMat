@@ -393,13 +393,13 @@ var taskMeasures = {
 		standStill: {m1: "Bilancio destra/sinistra", m2: "Bilancio fronte/retro", m3: "Peso stimato"},
 		standUp: {m1: "Bilancio destra/sinistra", m2: "Bilancio fronte/retro", m3: "Durata stimata"},
 		standStillBlind: this.standStill
-}
+};
 
 var taskUnits = {
 		standStill: {m1: "%", m2: "%", m3: "kg"},
 		standUp: {m1: "%", m2: "%", m3: "s"},
 		standStillBlind: this.standStill
-}
+};
 
 var dataFolder = pathName + '/data';
 var patientFolder;
@@ -437,7 +437,7 @@ function readFiles(action, websocket){
     		message = {
     				"taks" : files, 
     				"patientData" : {
-    					name: action.patient.slice(separatorIndex),
+    					name: action.patient.slice(separatorIndex + 1),
     					lastname: action.patient.slice(0, separatorIndex),
     					age: '00',
     					weight: '00'
