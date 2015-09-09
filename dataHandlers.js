@@ -70,7 +70,7 @@ function tare(cb){
 		var cont = 0;
 		var n;
 		var maxArray = new Array(toymat.dimension);
-		maxArray = dataProcessing.initArray(maxArray, 10);
+		maxArray = dataProcessing.initArray(maxArray, 1);
 		console.error('Tare request');
 		toymat.start();
 		toymat.dataStream.on('data', function(chunk) {			
@@ -203,6 +203,7 @@ function fitTest0(action, ws){
 			patientOnline = true;
 			console.log("opening patient session");
 			patientTasks.loadProfile(pathName, patientProfileFile);
+			patientTasks.setControllerData(toymat.configData.value);
 			return true;
 		} else {
 			console.log("refusing a patient request");

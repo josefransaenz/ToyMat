@@ -53,6 +53,12 @@ function setProfile(data, patientProfileFile){
 }
 exports.setProfile = setProfile;
 
+var controllerData = {};
+function setControllerData (configData){
+	controllerData = configData;
+}
+exports.setControllerData = setControllerData;
+
 var messages = {
 		welcome: "Prima di iniziare il test si assicuri di poter stare comodamente in piede dentro l'area di misura del tappeto",
 		start: 'Se desidera iniziare il test dica "avanti" a voce alta oppure prema il pulsante "Avanti"',
@@ -368,36 +374,26 @@ var standStill = function(messageSender, taskName){
 		setTimeout(function(){
 			message2send.comment = "Iniziando misura in: 0 secondi...";
 			self.emit('progress', message2send);
-			self.writestream.write('{"frames":[');
+			self.writestream.write('{"controllerData":' + JSON.stringify(controllerData) + ', "frames":[');
 			self.state = self.RUNNING;
 		}, 3000);
 		console.error('standStill task begin');
 	});
 	
 	this.on('data', function (frame){
-		if (this.state !== this.RUNNING) {return;}
-		var frame2save = {};
-		frame2save.array = [];
-		for (var i = 0; i < frame.array.length; i++){
-			frame2save.array[i] = frame.array[i];
+		if (this.state !== this.RUNNING) {return;}		
+		
+		if (this.chunks === 0){
+			self.writestream.write(JSON.stringify(frame));
+		} else {
+			self.writestream.write(',' + JSON.stringify(frame));
 		}
-		frame2save.rows = frame.rows;
-		frame2save.columns = frame.columns;
-		frame2save.raw = frame.raw;
-		frame2save.dt = frame.dt;
-		frame2save.count = frame.count;
-		frame2save.mean = frame.mean;
-		frame2save.load = frame.load;
-		frame2save.quadMean = frame.quadMean;
-		console.error('saving frame: ' + this.chunks.toString());
-		if (this.chunks !== 0){
-			self.writestream.write(',');
-		}
-		self.writestream.write(JSON.stringify(frame2save));
+		console.error('f_saved');
+		
 		this.chunks++;
+		var message2send = this.progressMessage;		
 		var load = frame.load;
-		var progress = Math.round(this.seconds/this.timeout*100000);
-		var message2send = this.progressMessage;
+		var progress = Math.round(this.seconds/this.timeout*100000);		
 		message2send.progress = progress;
 		message2send.load = load;
 		message2send.comment = "Misurando...";
@@ -412,17 +408,7 @@ var standStill = function(messageSender, taskName){
 		self.saving = false;
 		this.stop();
 		console.error('standStill task end');
-		/*fs.readFile(self.folder + self.fileName, function (err, data) {
-			if (err){
-				console.error('error opening ' + self.fileName + 'file');
-				return;
-			}
-			var dataObj = JSON.parse(data);
-			for (var i = 0; i < dataObj.length; i++){
 				
-			}
-		});*/
-		
 	});
 	
 	this.on('stop', function (){
@@ -481,31 +467,20 @@ var standUp = function(messageSender, taskName){
 		}
 		self.fd = fs.openSync(self.folder + self.fileName, 'w');
 		self.writestream = fs.createWriteStream(self.folder + self.fileName, {encoding: 'utf8', fd: self.fd});
-		self.writestream.write('{"frames":[');
+		self.writestream.write('{"controllerData":' + JSON.stringify(controllerData) + ', "frames":[');
 		self.saving = true;
 	});
 	
 	this.on('data', function (frame){
 		//save data
 		if (this.state !== this.RUNNING) {return;}
-		var frame2save = {};
-		frame2save.array = [];
-		for (var i = 0; i < frame.array.length; i++){
-			frame2save.array[i] = frame.array[i];
+		
+		if (this.chunks === 0){
+			self.writestream.write(JSON.stringify(frame));
+		} else {
+			self.writestream.write(',' + JSON.stringify(frame));
 		}
-		frame2save.rows = frame.rows;
-		frame2save.columns = frame.columns;
-		frame2save.raw = frame.raw;
-		frame2save.dt = frame.dt;
-		frame2save.count = frame.count;
-		frame2save.mean = frame.mean;
-		frame2save.load = frame.load;
-		frame2save.quadMean = frame.quadMean;
-		console.error('saving frame: ' + this.chunks.toString());
-		if (this.chunks !== 0){
-			self.writestream.write(',');
-		}
-		self.writestream.write(JSON.stringify(frame2save));
+		console.error('f_saved');
 		this.chunks++;
 		this.progressMessage.comment = "Misurando...";
 		this.emit('progress', this.progressMessage);

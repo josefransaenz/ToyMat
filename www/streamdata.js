@@ -598,7 +598,7 @@ var MatrixValuesCanvas = function (rows, columns){
 		
 	  for (var row = 0; row < rows; row++){
 	      for (var col = columns-1; col >= 0; col--){ 
-	    	  var textOutput = (Math.round(self.data[i]/217*100)).toString()+'%';
+	    	  var textOutput = (Math.round(self.data[i])).toString();//(Math.round(self.data[i]/217*100)).toString()+'%';
 	    	  i++;
 	          context.font = indicatorFont.toString()+'pt Calibri';
 	          context.textAlign = 'center';
