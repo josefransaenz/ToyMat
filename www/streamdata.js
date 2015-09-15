@@ -96,6 +96,10 @@ function createWS(protocolIndex){
 					streamButton.innerHTML = "Start";
 			        ti=0;
 			        frames=0;
+                    if (recording){
+                        recording = false;
+                        recButton.innerHTML = "Start Rec";
+                    }    
 					break;
 				case 'E':
 					alert('Controller error! (data overflow)')
@@ -103,6 +107,10 @@ function createWS(protocolIndex){
 					streamButton.innerHTML = "Start";
 			        ti=0;
 			        frames=0;
+                    if (recording){
+                        recording = false;
+                        recButton.innerHTML = "Start Rec";
+                    }
 					break;
 				default: 
 					console.log('msg non supported');
@@ -151,6 +159,24 @@ function exportToCsv() {
 }
 var saveButton = document.getElementById('save_button');
 saveButton.addEventListener('click', exportToCsv); 
+
+var recording = false;
+function recAction() {
+    if (!streaming) {return;}
+    if (recording){
+		var message = {"action" : 'endRec'};
+    	ws.send(JSON.stringify(message));
+        recording = false;
+		recButton.innerHTML = "Start Rec";
+	} else{
+		var message = {"action" : 'initRec'};
+    	ws.send(JSON.stringify(message));
+        recording = true;
+		recButton.innerHTML = "Stop Rec";
+	}
+}
+var recButton = document.getElementById('rec_button');
+recButton.addEventListener('click', recAction); 
 
 //Stream managing
 var runAnimation = {

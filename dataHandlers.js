@@ -150,7 +150,9 @@ var actions = {
 		"start" : 1,
 		"nextStep" : 2,
 		"stop" : 3,
-		"end" : 4
+		"end" : 4,
+		"initRec": 5,
+		"endRec": 6
 };
 
 var sequenceType = {};
@@ -324,6 +326,14 @@ util.inherits(realTimeStream, stream.Writable); // step 1
 realTimeStream.prototype._write = function (chunk, encoding, done) { // step 3	
 	if (chunk !== null){
 		this.sendFunction.send(JSON.stringify(this.transformFunction(chunk)), function() { });
+		if (recording){
+			if (recFrames === 0){
+				recStream.write(JSON.stringify(toymat.frame));
+			} else {
+				recStream.write(',' + JSON.stringify(toymat.frame));
+			}
+			recFrames++;
+		}
 	}		
 	done();
 };
@@ -338,6 +348,10 @@ clientStreams.length = function(){
 	}
 	return len;
 };
+
+var recording = false;
+var recStream = {};
+var recFrames = 0;
 
 function realTimeStreaming(action, websocket){
 	var errorListener = function(){
@@ -384,9 +398,42 @@ function realTimeStreaming(action, websocket){
 					toymat.stop(endStream);					
 				} else{
 					process.nextTick(endStream);
-				}				
+				}	
+				if (recording){
+					recStream.end('],"length":' + recFrames + '}');
+					recFrames = 0;
+					recording = false;
+					console.error('end recording');
+				}
 			}			
-			break;	
+			break;
+		case actions["initRec"]:
+			if (clientStreams[websocket.clientID.toString()] !== undefined){
+				console.error('Recording request');
+				var folder = pathName + '/Recordings';
+				var date = new Date();
+				var fileName = '/Record' + '_' + date.getTime() + '.JSON';
+				fs.exists(folder, function (exists) {
+					if (!exists){
+						fs.mkdirSync(folder);
+					}
+					var fd = fs.openSync(folder + fileName, 'w');
+					recStream = fs.createWriteStream(folder + fileName, {encoding: 'utf8', fd: fd});
+					recStream.write('{"controllerData":' + JSON.stringify(toymat.configData.value) + ', "frames":[');
+					recording = true;
+					console.error('start recording');
+				});
+			}
+			break;
+		case actions["endRec"]:
+			console.error('Recording stop request');
+			if (recording){
+				recStream.end('],"length":' + recFrames + '}');
+				recFrames = 0;
+				recording = false;
+				console.error('end recording');
+			}
+			break;
 	}	
 }
 
