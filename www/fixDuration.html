@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>    
-    <title>ToyMat Patient</title>
+    <title>ToyMat Fix Duration</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="/bootstrap-3.3.4-dist/css/bootstrap.min.css">    
@@ -12,25 +12,25 @@
         <div class="row">            
             <div class="col-sm-8" id="main_col">
                 <div class="jumbotron" id="main_jumbotron">
-                    <h2 id="message">Benvenuto! Questa è l'applicazione paziente del sistema ToyMat.</h2>
+                    <h2 id="message">Registrazione a durata fissa</h2>
                     <p id="msg_comment"></p>
                     <br>
                     <button id="start_button" type="button" class="btn btn-success btn-lg btn-block">
                         <h2> Avanti </h2>      
                         </button> 
-                    <input type="hidden" name="sequence" id="sequence" value="patient">
-                    </div>  
-                    <br>
-                    <div class="progress">
-                      <div class="progress-bar" role="progressbar" aria-valuenow="0"
-                          aria-valuemin="0" aria-valuemax="100" style="width:0%" id="progress_bar">
-                            
-                          </div>
-                        </div>
-                    <button id="cancel_button" type="button" class="btn btn-danger btn-lg"> Anulla</button>
-                    <br>
-                    <button type="button" class="btn btn-default" onclick="window.location.href='/'">Back to index</button>
+                    <input type="hidden" name="sequence" id="sequence" value="fixDuration">
+                </div>  
+                <br>                
+                <div class="progress">
+                  <div class="progress-bar" role="progressbar" aria-valuenow="0"
+                      aria-valuemin="0" aria-valuemax="100" style="width:0%" id="progress_bar">
+
+                  </div>
                 </div>
+                <button id="cancel_button" type="button" class="btn btn-danger btn-lg"> Anulla</button>
+                <br>
+                <button type="button" class="btn btn-default" onclick="window.location.href='/'">Back to index</button>
+            </div>
             <div class="col-sm-4" id="image_col">
                 <img id="image" src="/images/toymat1.png" class="img-responsive" alt="ToyMat test" width="289" height="319">
                 <div class="progress">
@@ -45,14 +45,14 @@
                 </div>
             
             </div>
-        
-    </div>
+        </div>
     
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="/jquery-1.11.2.min.js"></script>
     <script src="/bootstrap-3.3.4-dist/js/bootstrap.min.js"></script>
+    
     
     <script src="/patient.js"></script>
 </body>

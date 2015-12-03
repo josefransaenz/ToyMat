@@ -3,6 +3,7 @@
  */
 
 "use strict";
+
 var util = require('util')
 	, EventEmitter = require('events').EventEmitter
 	, exec = require('child_process').exec;
@@ -24,17 +25,21 @@ function loadProfile(pathName, patientProfileFile, cb){
         if(err){ // If error occurs
             console.error("Patient file error.");
         } else{
-        	patientFolder = pathName + '/' + patientProfile.value.lastname + patientProfile.value.name + "_Files";
-        	fs.exists(patientFolder, function (exists) {
-        		if (!exists){
-        			fs.mkdir(patientFolder, function(err){
-        				if (err){
-        					console.error("Patient folder error." + err);
-        				}        				
-        			});
-        		}
-        	});
-        }
+        	var dataFolder = pathName + '/data';
+        	console.error("Checking data folder: " + dataFolder);
+        	fs.mkdir(dataFolder, function(err){
+				if (err){
+					console.error("Data folder error." + err);
+				}
+				patientFolder = dataFolder + '/' + patientProfile.value.lastname + '_' + patientProfile.value.name;
+				console.error("Checking patient folder: " + patientFolder);
+	        	fs.mkdir(patientFolder, function(err){
+    				if (err){
+    					console.error("Patient folder error." + err);
+    				}        				
+    			});		        
+		    });
+		} 
         if (typeof cb === 'function'){
         	cb(patientProfile.value);
         }
@@ -47,6 +52,12 @@ function setProfile(data, patientProfileFile){
 	fs.writeFileSync(patientProfileFile, JSON.stringify(patientProfile.value));
 }
 exports.setProfile = setProfile;
+
+var controllerData = {};
+function setControllerData (configData){
+	controllerData = configData;
+}
+exports.setControllerData = setControllerData;
 
 var messages = {
 		welcome: "Prima di iniziare il test si assicuri di poter stare comodamente in piede dentro l'area di misura del tappeto",
@@ -62,6 +73,7 @@ var messages = {
 		standUp: "Adesso provi ad alzarsi in piedi, preferibilmente senza appogiare le mani (se riesce provi a farlo con " +
 				"le braccia incrociate)",
 		standStillBlind: "Adesso, tenendo gli occhi chiusi, provi a non muoversi tenendo le braccia lungo il corpo e la schiena dritta",
+		fixDuration: "Verrà registrata la distribuzione di pressione nell'area impostata durante 30 secondi",
 		end: "Il test è finito. Per adesso è tutto, grazie!"
 	};
 
@@ -74,6 +86,7 @@ var errMessages = {
 		sitDown: "sit down error",
 		standUp: "stand up error",
 		standStillBlind: "standStill2 error",	
+		fixDuration: "fixDuration error"
 };
 
 exports.RUNNING = 0;
@@ -95,7 +108,7 @@ var time = date.getTime();
  */
 var chunksPerSecond = 10; //depends of controller sampling frequency
 var maxZeroLoad = 3; //maximun expected output at zero load
-var weightTolerance = 0.2;// weigth measuring tolerance in %
+var weightTolerance = 0.3;// weigth measuring tolerance in %
 var maxStd = 4; //maximun standard deviation for considering a stable load
 var bufferLength = 3; //size of the load buffer in seconds (this is used for computing the mean and std)
 
@@ -274,13 +287,14 @@ util.inherits(tare, PatientTask);
  */
 var checkPatient = function(messageSender, taskName){
 	checkPatient.super_.call(this, messageSender, taskName);
-	this.timeout = 30000;
+	this.timeout = 10000;
 	this.delay = 2000;
 	this.totalLoadBuffer = new Uint16Array(chunksPerSecond*bufferLength);
 	this.maxChunks = this.timeout*chunksPerSecond/1000;
 	this.chunks = 0;	
 	this.minLoad = patientProfile.value.weight*(1 - weightTolerance);
 	this.maxLoad = patientProfile.value.weight*(1 + weightTolerance);
+	this.ending = false;
 
 	this.on('start', function(){
 		this.state = this.RUNNING;
@@ -292,10 +306,15 @@ var checkPatient = function(messageSender, taskName){
 		if (this.state !== this.RUNNING) {return;}
 		var meanLoad = dataProcessing.mean(this.totalLoadBuffer);
 		var stdLoad = dataProcessing.std(this.totalLoadBuffer);
-		if (meanLoad > this.minLoad && meanLoad < this.maxLoad && stdLoad < maxStd){
-			this.emit('complete', this.completeMessage);
-			this.stop();
-			console.error('checkPatient task end ok');
+		if (meanLoad > this.minLoad && !this.ending){// && meanLoad < this.maxLoad && stdLoad < maxStd){			
+			this.ending = true;
+			var self = this;
+			setTimeout(function(){
+				self.emit('complete', self.completeMessage);
+				self.stop();
+				self.ending = false;
+				console.error('checkPatient task end ok');
+			}, 3000);//delay for stabilization
 		} else{
 			this.progressMessage.progress = Math.round(this.seconds/this.timeout*100000);
 			this.progressMessage.load = meanLoad;
@@ -318,8 +337,8 @@ util.inherits(checkPatient, PatientTask);
 
 var standStill = function(messageSender, taskName){
 	standStill.super_.call(this, messageSender, taskName);
-	this.timeout = 13000;
-	this.delay = 2000;
+	this.timeout = 30000;
+	this.delay = 0;
 	this.totalLoadBuffer = new Uint16Array(chunksPerSecond*bufferLength);
 	this.maxChunks = this.timeout*chunksPerSecond/1000;
 	this.chunks = 0;	
@@ -355,33 +374,26 @@ var standStill = function(messageSender, taskName){
 		setTimeout(function(){
 			message2send.comment = "Iniziando misura in: 0 secondi...";
 			self.emit('progress', message2send);
-			self.writestream.write('{"frames":[');
+			self.writestream.write('{"controllerData":' + JSON.stringify(controllerData) + ', "frames":[');
 			self.state = self.RUNNING;
 		}, 3000);
 		console.error('standStill task begin');
 	});
 	
 	this.on('data', function (frame){
-		if (this.state !== this.RUNNING) {return;}
-		var frame2save = {};
-		frame2save.array = [];
-		for (var i = 0; i < frame.array.length; i++){
-			frame2save.array[i] = frame.array[i];
+		if (this.state !== this.RUNNING) {return;}		
+		
+		if (this.chunks === 0){
+			self.writestream.write(JSON.stringify(frame));
+		} else {
+			self.writestream.write(',' + JSON.stringify(frame));
 		}
-		frame2save.dt = frame.dt;
-		frame2save.count = frame.count;
-		frame2save.mean = frame.mean;
-		frame2save.load = frame.load;
-		frame2save.quadMean = frame.quadMean;
-		console.error('saving frame: ' + this.chunks.toString());
-		if (this.chunks !== 0){
-			self.writestream.write(',');
-		}
-		self.writestream.write(JSON.stringify(frame2save));
+		console.error('f_saved');
+		
 		this.chunks++;
+		var message2send = this.progressMessage;		
 		var load = frame.load;
-		var progress = Math.round(this.seconds/this.timeout*100000);
-		var message2send = this.progressMessage;
+		var progress = Math.round(this.seconds/this.timeout*100000);		
 		message2send.progress = progress;
 		message2send.load = load;
 		message2send.comment = "Misurando...";
@@ -391,21 +403,12 @@ var standStill = function(messageSender, taskName){
 	
 	this.on('timeout', function (){
 		this.emit('complete', this.completeMessage);
+		if (!self.saving) { return;}
 		self.writestream.end('],"length":' + this.chunks + '}');
 		self.saving = false;
 		this.stop();
 		console.error('standStill task end');
-		/*fs.readFile(self.folder + self.fileName, function (err, data) {
-			if (err){
-				console.error('error opening ' + self.fileName + 'file');
-				return;
-			}
-			var dataObj = JSON.parse(data);
-			for (var i = 0; i < dataObj.length; i++){
 				
-			}
-		});*/
-		
 	});
 	
 	this.on('stop', function (){
@@ -464,39 +467,33 @@ var standUp = function(messageSender, taskName){
 		}
 		self.fd = fs.openSync(self.folder + self.fileName, 'w');
 		self.writestream = fs.createWriteStream(self.folder + self.fileName, {encoding: 'utf8', fd: self.fd});
-		self.writestream.write('{"frames":[');
+		self.writestream.write('{"controllerData":' + JSON.stringify(controllerData) + ', "frames":[');
 		self.saving = true;
 	});
 	
 	this.on('data', function (frame){
 		//save data
 		if (this.state !== this.RUNNING) {return;}
-		var frame2save = {};
-		frame2save.array = [];
-		for (var i = 0; i < frame.array.length; i++){
-			frame2save.array[i] = frame.array[i];
+		
+		if (this.chunks === 0){
+			self.writestream.write(JSON.stringify(frame));
+		} else {
+			self.writestream.write(',' + JSON.stringify(frame));
 		}
-		frame2save.dt = frame.dt;
-		frame2save.count = frame.count;
-		frame2save.mean = frame.mean;
-		frame2save.load = frame.load;
-		frame2save.quadMean = frame.quadMean;
-		console.error('saving frame: ' + this.chunks.toString());
-		if (this.chunks !== 0){
-			self.writestream.write(',');
-		}
-		self.writestream.write(JSON.stringify(frame2save));
+		console.error('f_saved');
 		this.chunks++;
 		this.progressMessage.comment = "Misurando...";
 		this.emit('progress', this.progressMessage);
 	});
 	
 	this.on('complete', function(){
+		if (!self.saving) { return;}
 		self.writestream.end('],"length":' + this.chunks + '}');
 		self.saving = false;
 	});
 	
 	this.on('timeout', function(){
+		if (!self.saving) { return;}
 		self.writestream.end('],"length":' + this.chunks + '}');
 		self.saving = false;
 	});
@@ -529,6 +526,17 @@ var standStillBlind = function(messageSender, taskName){
 };
 util.inherits(standStillBlind, standStill);
 
+/*-------------
+ * fixDuration
+ * addEventListener "fullWeight" to do something once average output is more than a threshold and is stable
+ */
+//var patientFolder = '/' + patientProfile.lastName + patientProfile.name + "_Files";
+var fixDuration = function(messageSender, taskName){
+	standStill.call(this, messageSender, taskName);
+	this.timeout = 30000;
+};
+util.inherits(fixDuration, standStill);
+
 exports.loadProfile = loadProfile;
 exports.welcome = welcome;
 exports.end = end;
@@ -538,3 +546,4 @@ exports.standStill = standStill;
 exports.sitDown = sitDown;
 exports.standUp = standUp;
 exports.standStillBlind = standStillBlind;
+exports.fixDuration = fixDuration;

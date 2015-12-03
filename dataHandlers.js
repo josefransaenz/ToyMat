@@ -20,7 +20,16 @@ var patientProfileFile = '/patientProfile.JSON';
 
 toymat.readConfigData(pathName + configFile);
 
-function configController(configData){
+function configController(data){	
+	var configData = {};
+	for (var x in data) {
+		configData[x] = parseInt(data[x]);
+	}
+	if (configData.xn > 32 || configData.yn > 32 || configData.xn < configData.x0 || configData.yn < configData.y0){
+		console.error('invalid area: ' + configData.x0 + ',' + configData.y0 + ' to ' + configData.xn + ', ' + configData.yn);
+		return false;
+	}
+	console.error('setting new acquisition area: ' + configData.x0 + ',' + configData.y0 + ' to ' + configData.xn + ', ' + configData.yn);
 	toymat.writeConfigData(configData, pathName + configFile);
 }
 
@@ -52,6 +61,7 @@ function equilibrate(area2equilibrate, cb){
 	}
 }
 
+
 function tare(cb){
 	if (!patientOnline && clientStreams.length() === 0){
 		patientOnline = true;
@@ -60,7 +70,7 @@ function tare(cb){
 		var cont = 0;
 		var n;
 		var maxArray = new Array(toymat.dimension);
-		maxArray = dataProcessing.initArray(maxArray);
+		maxArray = dataProcessing.initArray(maxArray, 1);
 		console.error('Tare request');
 		toymat.start();
 		toymat.dataStream.on('data', function(chunk) {			
@@ -75,9 +85,14 @@ function tare(cb){
 	        	toymat.dataStream.removeAllListeners('data');
 	        	toymat.stop();
 	        	sum /= bufferLength;
+	        	var maxx=0;
 	        	for (n = 0; n < maxArray.length; n++){
 	        		maxArray[n] = Math.ceil(maxArray[n] * 1.2);
+	        		if (maxx < maxArray[n]){
+	        			maxx = maxArray[n];
+	        		}
 	        	}
+	        	console.error('max tare value: ' + maxx.toString() + ', maxArray: ' + JSON.stringify(maxArray));
 	        	toymat.writeConfigData({"calibrationOffset": sum, "maxZeroFrame": maxArray}, pathName + configFile);
 	        	patientOnline = false;
 				if (typeof cb === 'function'){
@@ -116,15 +131,32 @@ function calibrate(data, cb){
 }
 exports.calibrate = calibrate;
 
+function getEquilibration(){
+	if (!patientOnline && clientStreams.length() === 0){
+		toymat.getEquilibration(pathName + configFile);
+	}
+}
+exports.getEquilibration = getEquilibration;
+
+function setEquilibration(){
+	if (!patientOnline && clientStreams.length() === 0){
+		toymat.setEquilibration(pathName + configFile);
+	}
+}
+exports.setEquilibration = setEquilibration;
+
 var actions = {
 		"checkProtocol" : 0,
 		"start" : 1,
 		"nextStep" : 2,
 		"stop" : 3,
-		"end" : 4
+		"end" : 4,
+		"initRec": 5,
+		"endRec": 6
 };
 
-var sequence = {
+var sequenceType = {};
+sequenceType.patient = {
 		step0: 'welcome',
 		step1: 'tare',//no action, wait button next
 		step2: 'checkPatient',//auto start, detect weight increase, auto call next (timeouts and msg if not stable)
@@ -135,6 +167,20 @@ var sequence = {
 		step7: 'end',
 		last: 8
 };
+sequenceType.fixDuration = {
+		step0: 'welcome',
+		step1: 'fixDuration',
+		step2: 'end',
+		last: 3
+};
+sequenceType.sitToStand = {
+		step0: 'welcome',
+		step1: 'sitDown',
+		step2: 'standUp',
+		step3: 'end',
+		last: 4
+};
+var sequence = sequenceType.patient;
 
 var patientOnline = false;
 var testStep = 0;
@@ -142,9 +188,16 @@ var patientStream = {};
 var taskReady = true;
 var cont = 0;
 var task = {};
+var multiTask = true;
+var taskName = '';
+
 function fitTest0(action, ws){
 	function messageSender(message){
 		ws.send(JSON.stringify(message), function() { });
+	}
+	if (action.sequence !== undefined) {
+		sequence = sequenceType[action.sequence];
+		return true;
 	}
 	switch(actions[action]) {
 	case actions["checkProtocol"]://entry message
@@ -152,6 +205,7 @@ function fitTest0(action, ws){
 			patientOnline = true;
 			console.log("opening patient session");
 			patientTasks.loadProfile(pathName, patientProfileFile);
+			patientTasks.setControllerData(toymat.configData.value);
 			return true;
 		} else {
 			console.log("refusing a patient request");
@@ -161,9 +215,9 @@ function fitTest0(action, ws){
 	case actions["start"]:
 		console.log("starting patient session");		
 		break;	
-	case actions["nextStep"]:
+	case actions["nextStep"]:		
 		console.log("next step: " + testStep.toString());			
-		var taskName = sequence['step' + testStep.toString()];		
+		taskName = sequence['step' + testStep.toString()];			
 		task = new patientTasks[taskName](messageSender, taskName);		
 				
 		toymat.dataStream.on('data', function(chunk) {			
@@ -174,11 +228,11 @@ function fitTest0(action, ws){
 			toymat.dataStream.removeAllListeners('data');
 			toymat.removeAllListeners('idle');
 			toymat.stop();
-			messageSender(message);
+			messageSender(message);			
 			testStep++;
 			if (testStep === sequence.last){
 				testStep = 0;			
-			}	
+			}						
 		});
 		
 		task.on('progress', function(message){
@@ -207,8 +261,7 @@ function fitTest0(action, ws){
 					nextImage: null
 			};
 			messageSender(message);
-		});
-			 
+		});			 
 		break;	
 	case actions["stop"]:
 		console.log("ending patient session");
@@ -217,7 +270,7 @@ function fitTest0(action, ws){
 		if (task.state === task.RUNNING && task.stop !== undefined) {
 			task.stop();
 			toymat.stop();
-		} 				
+		} 
 		if (ws.readyState === ws.OPEN){
 			testStep = sequence.last-1;
 			setTimeout(function(){
@@ -260,7 +313,7 @@ transforms["quadMeanOutput"] = function(chunk){
 	}
 	output4.activePixels = toymat.frame.activePixels;
 	output4.dt = toymat.frame.dt;
-	console.error(JSON.stringify(output4));
+	//console.error(JSON.stringify(output4));
 	return output4;
 };
 
@@ -273,6 +326,14 @@ util.inherits(realTimeStream, stream.Writable); // step 1
 realTimeStream.prototype._write = function (chunk, encoding, done) { // step 3	
 	if (chunk !== null){
 		this.sendFunction.send(JSON.stringify(this.transformFunction(chunk)), function() { });
+		if (recording){
+			if (recFrames === 0){
+				recStream.write(JSON.stringify(toymat.frame));
+			} else {
+				recStream.write(',' + JSON.stringify(toymat.frame));
+			}
+			recFrames++;
+		}
 	}		
 	done();
 };
@@ -287,6 +348,10 @@ clientStreams.length = function(){
 	}
 	return len;
 };
+
+var recording = false;
+var recStream = {};
+var recFrames = 0;
 
 function realTimeStreaming(action, websocket){
 	var errorListener = function(){
@@ -333,9 +398,42 @@ function realTimeStreaming(action, websocket){
 					toymat.stop(endStream);					
 				} else{
 					process.nextTick(endStream);
-				}				
+				}	
+				if (recording){
+					recStream.end('],"length":' + recFrames + '}');
+					recFrames = 0;
+					recording = false;
+					console.error('end recording');
+				}
 			}			
-			break;	
+			break;
+		case actions["initRec"]:
+			if (clientStreams[websocket.clientID.toString()] !== undefined){
+				console.error('Recording request');
+				var folder = pathName + '/Recordings';
+				var date = new Date();
+				var fileName = '/Record' + '_' + date.getTime() + '.JSON';
+				fs.exists(folder, function (exists) {
+					if (!exists){
+						fs.mkdirSync(folder);
+					}
+					var fd = fs.openSync(folder + fileName, 'w');
+					recStream = fs.createWriteStream(folder + fileName, {encoding: 'utf8', fd: fd});
+					recStream.write('{"controllerData":' + JSON.stringify(toymat.configData.value) + ', "frames":[');
+					recording = true;
+					console.error('start recording');
+				});
+			}
+			break;
+		case actions["endRec"]:
+			console.error('Recording stop request');
+			if (recording){
+				recStream.end('],"length":' + recFrames + '}');
+				recFrames = 0;
+				recording = false;
+				console.error('end recording');
+			}
+			break;
 	}	
 }
 
@@ -343,14 +441,15 @@ var taskMeasures = {
 		standStill: {m1: "Bilancio destra/sinistra", m2: "Bilancio fronte/retro", m3: "Peso stimato"},
 		standUp: {m1: "Bilancio destra/sinistra", m2: "Bilancio fronte/retro", m3: "Durata stimata"},
 		standStillBlind: this.standStill
-}
+};
 
 var taskUnits = {
 		standStill: {m1: "%", m2: "%", m3: "kg"},
 		standUp: {m1: "%", m2: "%", m3: "s"},
 		standStillBlind: this.standStill
-}
+};
 
+var dataFolder = pathName + '/data';
 var patientFolder;
 var taskFolder;
 function readFiles(action, websocket){
@@ -358,14 +457,44 @@ function readFiles(action, websocket){
 	if (actions[action] === actions.checkProtocol){
 		return true;
 	}
-	if (action.task === null){
-		getPatient(function(patientData){
-			patientFolder = pathName + '/' + patientData.lastname + patientData.name + "_Files";
-			message = {"patientData" : patientData, "tasks": ["standStill", "standUp", "standStillBlind"]};
+	if (action.patient === null){
+		fs.readdir(dataFolder, function (err, files) {
+    		if (err){
+    			message = {"error" : "No patient data found! "};
+    			websocket.send(JSON.stringify(message));
+    			return;
+    		}
+    		message = {"patientList" : files};
+			websocket.send(JSON.stringify(message));
+			console.log("sending patient list to caregiver...");
+		});
+	} else	if (action.task === null){
+		patientFolder = dataFolder + '/' + action.patient;
+		fs.readdir(patientFolder, function (err, files) {
+    		if (err){
+    			message = {"error" : "No data for patient: " + action.patient};
+    			websocket.send(JSON.stringify(message));
+    			return;
+    		}
+    		var separatorIndex =  action.patient.search('_');
+    		if (separatorIndex<0){
+    			message = {"error" : "No valid patient: " + action.patient};
+    			websocket.send(JSON.stringify(message));
+    			return;
+    		}
+    		message = {
+    				"taks" : files, 
+    				"patientData" : {
+    					name: action.patient.slice(separatorIndex + 1),
+    					lastname: action.patient.slice(0, separatorIndex),
+    					age: '00',
+    					weight: '00'
+    				} 
+    		};
 			websocket.send(JSON.stringify(message));
 			console.log("sending patient data to caregiver...");
-			taskFolder = undefined;
 		});
+		taskFolder = undefined;		
 	} else if (action.file === null){
 		if (patientFolder === undefined) {return;}
 		taskFolder = patientFolder + '/' + action.task;
@@ -381,14 +510,21 @@ function readFiles(action, websocket){
 		});
 	} else if (action.file !== undefined && action.file !== null){
 		if (taskFolder === undefined) {return;}
-		fs.readFile(taskFolder + '/' + action.file, function (err, data) {			
+		fs.readFile(taskFolder + '/' + action.file, function (err, data) {	
+			var message;
 			if (err){
-				var message = {"error" : "No data for file: " + action.file};
+				message = {"error" : "No data for file: " + action.file};
 				websocket.send(JSON.stringify(message));
 				console.error('Error reading task file' + action.file);
 				return;
 			}
-			websocket.send(JSON.stringify(JSON.parse(data)));
+			try {
+				message = JSON.parse(data);
+			} catch (err){
+				message = {"error" : "Error parsing data from file"};
+				console.error("Error parsing data from file");
+			}
+			websocket.send(JSON.stringify(message));
 			console.log("sending task file: " + action.file + " to caregiver...");
 		});		
 	}		

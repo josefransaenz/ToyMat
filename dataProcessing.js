@@ -66,8 +66,15 @@ function quadMean(frame, refFrame){
 		refFrame = new Array(length);
 		refFrame = initArray(refFrame);
 	}
-	var rows = Math.floor(Math.sqrt(length));
-	var columns = rows;
+	var rows;
+	var columns;
+	if (frame.rows !== undefined) {
+		rows = frame.rows;
+		columns = frame.columns;
+	} else {
+		rows = Math.floor(Math.sqrt(length));
+		columns = rows;
+	}	
 	var halfcols = columns/2;
     var halfrows = rows/2;
     var j = 0;

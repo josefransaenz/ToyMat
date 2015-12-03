@@ -28,6 +28,8 @@ function createWS(protocolIndex){
 	case 0:
 		dataProtocol="fullMatrix";
 		createCanvas = function(){
+            dataSpecs.rows = Math.abs(dataSpecs.yn - dataSpecs.y0);
+            dataSpecs.columns = Math.abs(dataSpecs.xn - dataSpecs.x0);
 			myCanvas = new MatrixCanvas(dataSpecs.rows, dataSpecs.columns);
 			dataSpecs.dimension=dataSpecs.rows*dataSpecs.columns;
 			myCSV = new CSV(dataSpecs);
@@ -94,6 +96,10 @@ function createWS(protocolIndex){
 					streamButton.innerHTML = "Start";
 			        ti=0;
 			        frames=0;
+                    if (recording){
+                        recording = false;
+                        recButton.innerHTML = "Start Rec";
+                    }    
 					break;
 				case 'E':
 					alert('Controller error! (data overflow)')
@@ -101,6 +107,10 @@ function createWS(protocolIndex){
 					streamButton.innerHTML = "Start";
 			        ti=0;
 			        frames=0;
+                    if (recording){
+                        recording = false;
+                        recButton.innerHTML = "Start Rec";
+                    }
 					break;
 				default: 
 					console.log('msg non supported');
@@ -150,6 +160,24 @@ function exportToCsv() {
 var saveButton = document.getElementById('save_button');
 saveButton.addEventListener('click', exportToCsv); 
 
+var recording = false;
+function recAction() {
+    if (!streaming) {return;}
+    if (recording){
+		var message = {"action" : 'endRec'};
+    	ws.send(JSON.stringify(message));
+        recording = false;
+		recButton.innerHTML = "Start Rec";
+	} else{
+		var message = {"action" : 'initRec'};
+    	ws.send(JSON.stringify(message));
+        recording = true;
+		recButton.innerHTML = "Stop Rec";
+	}
+}
+var recButton = document.getElementById('rec_button');
+recButton.addEventListener('click', recAction); 
+
 //Stream managing
 var runAnimation = {
     value: false
@@ -193,6 +221,7 @@ function readData(data){
 		//rowData = data.dt.toString() + ",";
         var maxi = data[0];
         var mini = data[0];
+        var avg = 0;
 		rowData = data[dataSpecs.dimension].toString() + ",";//dt
 		for (var i = 0; i < dataSpecs.dimension; i++){                  
 			myCanvas.data[i] = data[i];            
@@ -200,7 +229,13 @@ function readData(data){
             if (maxi<data[i]){ maxi = data[i];}
             if (mini>data[i]){ mini = data[i];}
         }
-        document.getElementById('msg').innerHTML = 'max: ' + maxi.toString() + ', mini: ' + mini.toString();
+        /*for (var m = 12; m<18;m++){
+            for (var n = 12;n<18;n++){
+                avg += data[m*32 + n];
+            }
+        }*/
+        avg /= 36;
+        document.getElementById('msg').innerHTML = 'max: ' + maxi.toString() + ', avg: ' + avg.toString();
         //document.getElementById('msg').innerHTML = 'pixels: ' + data.activePixels.toString();
 	} else if (dataSpecs.dimension<=4 && data.length === dataSpecs.dimension){			
 		rowData = data.dt.toString() + ",";
@@ -329,7 +364,19 @@ var QuadCanvas = function(){
     context.lineWidth = widths;
     context.strokeStyle = 'black';
     context.stroke();
-	
+	var bufferX = [];
+    var bufferY = [];
+    for (var n = 0; n < 5; n++) {
+        bufferX.push(canvas.height / 2);
+        bufferY.push(canvas.height / 2);
+    }
+    function bufferMean (buffer){
+        var sum = 0;
+        for (var n = 0; n < buffer.length; n++){
+            sum += buffer[n];
+        }
+	   return sum/buffer.length;
+    }
 	this.draw = function () {
 		  var i = 0;
 		  var X = (this.data[0] + this.data[2]) - (this.data[1] + this.data[3]);
@@ -346,7 +393,12 @@ var QuadCanvas = function(){
 		  } else if (Y > (canvas.height / 2) - widths*3){
 			  Y = (canvas.height / 2) - widths*3;
 		  }
-        
+        bufferX.unshift(X);
+        bufferX.pop();
+        X = bufferMean(bufferX);
+        bufferY.unshift(Y);
+        bufferY.pop();
+        Y = bufferMean(bufferY);
 		  context.clearRect(widths, widths, canvas.width-widths*2, canvas.height-widths*2);
 		  context.lineWidth = Math.round(widths/2);
 		  context.strokeStyle = 'gray';
@@ -571,8 +623,8 @@ var MatrixValuesCanvas = function (rows, columns){
 			}
 		
 	  for (var row = 0; row < rows; row++){
-	      for (var col = 0; col < columns; col++){
-	    	  var textOutput = (Math.round(self.data[i]/217*100)).toString()+'%';
+	      for (var col = columns-1; col >= 0; col--){ 
+	    	  var textOutput = (Math.round(self.data[i])).toString();//(Math.round(self.data[i]/217*100)).toString()+'%';
 	    	  i++;
 	          context.font = indicatorFont.toString()+'pt Calibri';
 	          context.textAlign = 'center';
@@ -585,4 +637,4 @@ var MatrixValuesCanvas = function (rows, columns){
 };
   
 
-  
+

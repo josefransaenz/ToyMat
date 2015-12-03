@@ -7,20 +7,30 @@
         <div class="row">             
             <div class="col-sm-4">
                 <h3>Controller settings</h3>
-                <h4>Serial number: <output id="serial">XXX</output></h4>
-                <form role="form" action="/support" method="post">
-                    <div class="form-group">
-                        <label for="r8">Rows:</label>
-                        <label class="radio-inline"><input type="radio" name="rows" value="8" id="r8">8</label>
-                        <label class="radio-inline"><input type="radio" name="rows" value="16" id="r16">16</label>
-                        <label class="radio-inline"><input type="radio" name="rows" value="32" id="r32">32</label>
+                <h4>Serial number: <output id="serialNumber">XXX</output></h4>
+                <form role="form" action="/support" method="post">                     
+                    <label for="acArea_list">Acquisition area limits:</label>
+                    <div class="form-group" id="acArea_list">
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <label for="x0">X0: </label>
+                                <input type="text" class="form-control" name="xn" value="0" id="xn">
+                            </div>
+                            <div class="col-sm-3">
+                                <label for="y0">Y0: </label>
+                                <input type="text" class="form-control" name="y0" value="0" id="y0">
+                            </div>
+                            <div class="col-sm-3">
+                                <label for="xn">Xn: </label>
+                                <input type="text" class="form-control" name="x0" value="32" id="x0">
+                            </div>
+                            <div class="col-sm-3">
+                                <label for="yn">Yn: </label>
+                                <input type="text" class="form-control" name="yn" value="32" id="yn">
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="r8">Columns:</label>
-                        <label class="radio-inline"><input type="radio" name="columns" value="8" id="c8">8</label>
-                        <label class="radio-inline"><input type="radio" name="columns" value="16" id="c16">16</label>
-                        <label class="radio-inline"><input type="radio" name="columns" value="32" id="c32">32</label>
-                    </div>
+                    
                     <label for="gain_list">Input amplifier gain:</label>
                     <div class="form-group" id="gain_list">                        
                         <label class="radio-inline"><input type="radio" name="pgaGain" value="0" id="g0">x1</label>
@@ -35,6 +45,10 @@
                     <div class="form-group">
                         <label for="eqTh">Equilibration threshold (kPa): </label>
                         <input type="text" class="form-control" name="eqThreshold" value="247" id="eqTh">
+                    </div>
+                    <div class="checkbox">
+                        <label><input type="radio" name="saveRaw" value="0" id="s0"> Save calibrated sensor data</label>
+                        <label><input type="radio" name="saveRaw" value="1" id="s1"> Save raw sensor data</label>
                     </div>
                     <label for="eqTh_list">Pressure calibration constants:</label>
                     <div class="form-group" id="eqTh_list">
@@ -103,25 +117,47 @@
                             onclick="alert('Please apply the equilibration reference pressure before continue!')">
                         Equilibrate sensors</button>    
                 </form>
+                <br>
+                <form role="form" action="/support" method="post">
+                    <input type="hidden" name="getEquilibration" id="getEquilibration" value="true">
+                    <button type="submit"  class="btn btn-danger" 
+                            onclick="alert('This operation will change the controller configuration file!')">
+                        Save equilibration data to file</button>
+                </form>
+                <br>
+                <form role="form" action="/support" method="post">
+                    <input type="hidden" name="setEquilibration" id="setEquilibration" value="true">
+                    <button type="submit"  class="btn btn-danger" 
+                            onclick="alert('This operation will change the equilibration settings in the controller  according to the configuration file!')">
+                        Set controller equilibration from file</button>
+                </form>
             </div>
             <div class="col-sm-4">
                 <h3>Patient settings</h3>
                 <form role="form" action="/support" method="post">
                     <div class="form-group">
-                        <label for="name">Name: </label>
-                        <input type="text" class="form-control" name="name" value="Default_name" id="name">
-                    </div>
-                    <div class="form-group">
-                        <label for="lastname">Last name: </label>
-                        <input type="text" class="form-control" name="lastname" value="Default_lastname" id="lastname">
-                    </div>
-                    <div class="form-group">
-                        <label for="weight">Weight (kg): </label>
-                        <input type="text" class="form-control" name="weight" value="00" id="weight">
-                    </div>
-                    <div class="form-group">
-                        <label for="age">Age: </label>
-                        <input type="text" class="form-control" name="age" value="00" id="age">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <label for="name">Name: </label>
+                                <input type="text" class="form-control" name="name" value="Default_name" id="name">
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="lastname">Last name: </label>
+                                <input type="text" class="form-control" name="lastname" value="Default_lastname" id="lastname">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <label for="weight">Weight (kg): </label>
+                                <input type="text" class="form-control" name="weight" value="00" id="weight">
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="age">Age: </label>
+                                <input type="text" class="form-control" name="age" value="00" id="age">
+                            </div>
+                        </div>
+                         
+                        
                     </div>
                     <button type="submit" class="btn btn-success" 
                             onclick="alert('Patient data is about to change!')">
@@ -129,10 +165,13 @@
                 </form>
             </div>
         </div>
+        <br>
+        <button type="button" class="btn btn-default" onclick="window.location.href='/'">Back to index</button>  
     </div> 
     
     <!-- Bootstrap core JavaScript
     ================================================== -->
+    
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="/jquery-1.11.2.min.js"></script>
     <script src="/bootstrap-3.3.4-dist/js/bootstrap.min.js"></script>

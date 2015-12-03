@@ -8,7 +8,7 @@ var socketServer = require("./socketServer");
 var dataHandlers = require("./dataHandlers");
 
 var handle = {};
-handle["/"] = requestHandlers.patient;
+handle["/"] = requestHandlers.index;
 handle["/patient"] = requestHandlers.patient;
 handle["/support"] = requestHandlers.support;
 handle["/equilibrate"] = requestHandlers.equilibrate;

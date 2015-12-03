@@ -2,9 +2,12 @@
  * 
  */
 "use strict";
+var patient_select = document.getElementById("patient_select");
+var patient_details = document.getElementById("patient_details");
 var patient_name = document.getElementById("patient_name");
 var patient_age = document.getElementById("patient_age");
 var patient_weight = document.getElementById("patient_weight");
+var taskSelect = document.getElementById('taskSelect');
 var taskFiles_select = document.getElementById("taskFiles_select");
 var taskDetails = document.getElementById("taskDetails");
 var canvas_type = document.getElementById("canvas_type");
@@ -17,11 +20,15 @@ var frames_range = document.getElementById('frames_range');
 taskDetails.style.visibility = "hidden";
 graph_div.style.visibility = "hidden";
 
+var patientList = [];
+var patientList_items = [];
+var patient = null;
 var task = "standStill";
 var taskFiles = [];
 var taskFiles_items = [];
 var readingAllFiles = false;
 var fileCounter = 0;
+main_col.removeChild(taskSelect);
 main_col.removeChild(taskFiles_select);
 myCanvas.style.visibility = "hidden";
 frames_range.style.visibility = "hidden";
@@ -79,14 +86,37 @@ var ws = new WebSocket('ws://' + host + ':8888'+'/caregiver',  'readFiles');
 document.getElementById('msg').innerHTML = 'establishing connection...';
 ws.onopen = function (event) {
 	document.getElementById('msg').innerHTML = "connected";
-	var message = {"action" : {'task': null}};
+	var message = {"action" : {'patient': null}};
     ws.send(JSON.stringify(message));
-    document.getElementById('msg').innerHTML = "scaricando i dati del paziente...";
+    document.getElementById('msg').innerHTML = "scaricando l'elenco dei pazienti...";
 };
 ws.onmessage = function (event) {
 	var bufferData = event.data;
 	var data = JSON.parse(bufferData);
-	if (data.patientData !== undefined){
+    if (data.patientList !== undefined){        
+		taskDetails.style.visibility = "hidden";
+        graph_div.style.visibility = "hidden";
+        canvas_type.style.visibility = "hidden";
+        myCanvas.style.visibility = "hidden";
+        frames_range.style.visibility = "hidden";
+		patientList = data.patientList;
+		for (n = 0; n < patientList.length; n++){
+			patientList_items[n] =  document.createElement("OPTION");
+			patientList_items[n].value = n;
+			patientList_items[n].innerHTML = patientList[n];
+			patient_select.appendChild(patientList_items[n]);
+		}
+		patient_select.selectedIndex = 0;
+		document.getElementById('msg').innerHTML = "Ok";
+    } else if (data.patientData !== undefined){
+        if (!main_col.contains(taskSelect)){
+			main_col.appendChild(taskSelect);
+		}
+        taskDetails.style.visibility = "hidden";
+        graph_div.style.visibility = "hidden";
+        canvas_type.style.visibility = "hidden";
+        myCanvas.style.visibility = "hidden";
+        frames_range.style.visibility = "hidden";
 		patient_name.innerHTML = data.patientData.name + ' ' + data.patientData.lastname;
 		patient_age.innerHTML = data.patientData.age + ' anni';
 		patient_weight.innerHTML = data.patientData.weight + ' kg';
@@ -125,7 +155,8 @@ ws.onmessage = function (event) {
             changeCanvas();
 			displaySummary(results.summary, results.labels);
 			plotMeasures(results.measures, results.labels);
-			displayFrames(results.frames);			
+			displayFrames(results.frames);
+            document.getElementById('msg').innerHTML = "Ok";
 		} else{
             globalResults.measures.mean[0][fileCounter] = results.summary.mean[0];
             globalResults.measures.mean[1][fileCounter] = results.summary.mean[1];
@@ -155,18 +186,26 @@ ws.onmessage = function (event) {
                 displaySummary(globalResults.summary, globalResults.labels);
                 plotMeasures(globalResults.measures, globalResults.labels);
                 readingAllFiles = false;
+                document.getElementById('msg').innerHTML = "Ok";
             } else{
                 var message = {"action" : {'task': task, 'file': taskFiles[fileCounter]}};
                 ws.send(JSON.stringify(message));
-                document.getElementById('msg').innerHTML = 'scaricando i dati del registro ' + (fileCounter + 1).toString + '/' + taskFiles.length.toString() + ' ...';
+                document.getElementById('msg').innerHTML = 'scaricando i dati del registro ' + (fileCounter + 1).toString() + '/' + taskFiles.length.toString() + ' ...';
             }
-        }
-		document.getElementById('msg').innerHTML = "Ok";
+        }		
 	}		
 }	
 	
+//patient selection
+patient_select.addEventListener('input', changePatient); 
+function changePatient(){
+	patient = patient_select.value;
+	var message = {"action" : {patient: patientList[patient], 'task': null}};
+    ws.send(JSON.stringify(message));
+    document.getElementById('msg').innerHTML = "scaricando i dati del paziente...";	
+}
+
 //task selection
-var taskSelect=document.getElementById('taskSelect');
 taskSelect.addEventListener('input', changeTask); 
 function changeTask(){
 	task = taskSelect.value;
@@ -320,9 +359,25 @@ function plotMeasures(measures, labels){
     }
     var g1;
     if (readingAllFiles){
-       g1 = new Dygraph(graph1_div, graphData, {labels: ["tempo", labels.label[0], labels.label[1]], xlabel: "Tempo/Data", ylabel: "(%)", title: "Bilancio", xRangePad: window.innerWidth*0.01, errorBars: true}); 
+       g1 = new Dygraph(graph1_div, graphData, {
+           labels: ["tempo", labels.label[0], labels.label[1]],
+           xlabel: "Tempo/Data",
+           ylabel: "(%)",
+           title: "Bilancio",
+           xRangePad: window.innerWidth*0.01,
+           errorBars: true,
+           drawPoints: true,
+           colors: ["rgb(255,0,0)", "rgb(0,0,255)"]
+       }); 
     } else{
-	   g1 = new Dygraph(graph1_div, graphData, {labels: ["tempo", labels.label[0], labels.label[1]], xlabel: "Tempo (s)", ylabel: "(%)", title: "Bilancio", xRangePad: window.innerWidth*0.01 });
+	   g1 = new Dygraph(graph1_div, graphData, {
+           labels: ["tempo", labels.label[0], labels.label[1]],
+           xlabel: "Tempo (s)",
+           ylabel: "(%)",
+           title: "Bilancio",
+           xRangePad: window.innerWidth*0.01,
+           colors: ["rgb(255,0,0)", "rgb(0,0,255)"]
+       });
     }
     graphData = [];
     for (x in measures.time){
@@ -335,13 +390,26 @@ function plotMeasures(measures, labels){
     var g2;
     if (readingAllFiles){
         if (task.search('standUp') >= 0){
-            g2 = new Dygraph(graph2_div, graphData, {labels: [ "tempo", labels.label[2] ], xlabel: "Tempo/Data", ylabel: "(s)", title: "Durata sit-to-stand", xRangePad: window.innerWidth*0.01, errorBars: true}); 
+            g2 = new Dygraph(graph2_div, graphData, {
+                labels: [ "tempo", labels.label[2] ],
+                xlabel: "Tempo/Data", ylabel: "(s)",
+                title: "Durata sit-to-stand",
+                xRangePad: window.innerWidth*0.01,
+                drawPoints: true,
+                errorBars: true
+            }); 
         } else{
             g2 = new Dygraph(graph2_div, graphData, {labels: [ "tempo", labels.label[2] ], xlabel: "Tempo/Data", ylabel: "(kg)", title: "Carico", xRangePad: window.innerWidth*0.01, errorBars: true}); 
         }
     } else {
         if (task.search('standUp') >= 0){
-            g2 = new Dygraph(graph2_div, graphData, {labels: [ "tempo", labels.label[2] ], xlabel: "Tempo (s)", ylabel: "(kg)", title: "Carico", xRangePad: window.innerWidth*0.01});
+            g2 = new Dygraph(graph2_div, graphData, {
+                labels: [ "tempo", labels.label[2] ],
+                xlabel: "Tempo (s)",
+                ylabel: "(kg)",
+                title: "Carico",
+                xRangePad: window.innerWidth*0.01
+            });
             if (measures.start !== undefined){
                 g2.ready(function() {
                     g2.setAnnotations([{
@@ -370,8 +438,16 @@ function plotMeasures(measures, labels){
 
 //display frames
 function displayFrames(frames){
-    var frameDim = Math.floor(Math.sqrt(frames[0].array.length));
-	matrixCanvas = new MatrixCanvas(frameDim, frameDim);
+    var rows;
+	var columns;
+	if (frames[0].rows !== undefined) {
+		rows = frames[0].rows;
+		columns = frames[0].columns;
+	} else {
+		rows = Math.floor(Math.sqrt(frames[0].array.length));
+		columns = rows;
+	}
+	matrixCanvas = new MatrixCanvas(rows, columns);
     matrixCanvas.data = frames[0].array;
     matrixCanvas.dt = frames[0].dt;
     matrixCanvas.draw();
@@ -470,7 +546,12 @@ var MatrixCanvas = function (rows, columns){
 	var canvas = document.getElementById('myCanvas');
 	var context = canvas.getContext('2d');
 	context.clearRect(0, 0, canvas.width, canvas.height);
-	var dim = Math.round(canvas.width*0.028)*32/rows;//******** modify
+    var dim;
+    if (rows > columns){
+        dim = Math.round(canvas.width*0.028)*32/rows;//******** modify
+    } else {
+        dim = Math.round(canvas.width*0.028)*32/columns;//******** modify
+    }
 	var fontDim = dim/4;
 	var widths = Math.round(canvas.width*0.012);
 	var myRectangle = {

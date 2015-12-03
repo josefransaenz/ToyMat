@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>    
+    <title>ToyMat Home</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/bootstrap-3.3.4-dist/css/bootstrap.min.css">    
+    </head>
+<body>
+    <br>
+    <div class="container">
+        <div class="row">            
+            <div class="col-sm-8" id="main_col">
+                <div class="jumbotron" id="main_jumbotron">
+                    <h1 style="text-align:center">ToyMat</h1>
+                    <h2 style="text-align:center"> Sistema per l'analisi della pressione plantare</h2>
+                </div>
+                <h2><label for="pages_list">Scegli una applicazione o attività:</label></h2>
+                <div class="list-group" id="pages_list">
+                    <a href="/streamdata.html" class="list-group-item">
+                        <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-play"></span> Real-Time Streaming</h4>
+                        <p class="list-group-item-text">Visualizazione dei dati in tempo reale</p>
+                    </a>
+                    <a href="/support" class="list-group-item">
+                        <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-wrench"></span> Impostazioni</h4>
+                        <p class="list-group-item-text">Configurazione del hardware, area d'acquisizione, calibrazione e dati del paziente</p>
+                    </a>
+                    <a href="/fixDuration.html" class="list-group-item">
+                        <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-time"></span> Registrazione durata fissa</h4>
+                        <p class="list-group-item-text">Per realizzare test di baropodometria e stabilometria</p>
+                    </a>
+                    <a href="/sitToStand.html" class="list-group-item">
+                        <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-flash"></span> Registrazione movimento Sit-to-Stand</h4>
+                        <p class="list-group-item-text">Per realizzare test del movimento da seduto a in piedi</p>
+                    </a>
+                    <a href="/patient.html" class="list-group-item">
+                        <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-user"></span> Applicazione Paziente</h4>
+                        <p class="list-group-item-text">Sequenza guidata per realizzare diversi test</p>
+                    </a>
+                    <a href="/caregiver.html" class="list-group-item">
+                        <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-floppy-open"></span> Applicazione Caregiver</h4>
+                        <p class="list-group-item-text">Per visualizzare e analizzare i dati registrati</p>
+                    </a>
+                </div>
+            </div>
+            <div class="col-sm-4" id="image_col">
+                <img id="image" src="/images/toymat1.png" class="img-responsive" alt="ToyMat test" width="289" height="319">
+            </div>
+        </div>
+                
+    </div>
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="/jquery-1.11.2.min.js"></script>
+    <script src="/bootstrap-3.3.4-dist/js/bootstrap.min.js"></script>
+    
+</body>
+</html>
